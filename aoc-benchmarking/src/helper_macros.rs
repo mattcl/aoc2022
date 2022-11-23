@@ -14,6 +14,9 @@ macro_rules! aoc_bench {
                 let mut problem = <$problem>::instance(&input).expect("Could not parse input");
                 b.iter(|| problem.part_two().expect("Failed to solve part two"))
             });
+            group.bench_function("Combined", |b| {
+                b.iter(|| <$problem>::solve(&input).expect("Failed to solve"))
+            });
             group.finish();
         }
     };
@@ -24,13 +27,8 @@ macro_rules! aoc_bench {
             let input = std::fs::read_to_string($input).expect("Could not load input");
 
             group.bench_function($combined_desc, |b| {
-                let mut problem = <$problem>::instance(&input).expect("Could not parse input");
-                b.iter(|| {
-                    problem.part_one().expect("Failed to solve part one");
-                    problem.part_two().expect("Failed to solve part two");
-                })
+                b.iter(|| <$problem>::solve(&input).expect("Failed to solve"))
             });
-            group.finish();
         }
     };
 }

@@ -43,8 +43,8 @@ BENCH_REPLACEMENT=$(cat <<EOF
         day_${DAY},
         "../${DESIRED}/input.txt",
         ${STRUCT_NAME},
-        "Part 1: PLACEHOLDER",
-        "Part 2: PLACEHOLDER"
+        "Part 1",
+        "Part 2"
     ),
     // bench_marker
 EOF
