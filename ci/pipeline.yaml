@@ -14,4 +14,4 @@ jobs:
       - get: repo
         trigger: true
       - task: test-and-bench
-        file: repo/ci/tasks/test-and-bench.yml
+        file: repo/ci/tasks/test-and-bench.yaml
