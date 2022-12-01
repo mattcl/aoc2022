@@ -6,12 +6,12 @@ use itertools::Itertools;
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Elf {
-    food: Vec<usize>,
+    calories: usize,
 }
 
 impl Elf {
     pub fn calories(&self) -> usize {
-        self.food.iter().sum()
+        self.calories
     }
 }
 
@@ -26,16 +26,16 @@ impl FromStr for CalorieCounting {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let lines: Vec<_> = s.trim().lines().collect();
 
-        let elves: Vec<_> = lines
-            .split(|l| l.is_empty())
-            .map(|items| {
-                items
-                    .iter()
-                    .map(|item| item.trim().parse::<usize>())
-                    .collect::<Result<Vec<_>, _>>()
-            })
-            .map_ok(|food| Elf { food })
-            .collect::<Result<Vec<_>, _>>()?;
+        let mut elves = Vec::default();
+
+        for values in lines.split(|l| l.is_empty()) {
+            let mut calories = 0;
+            for val in values {
+                calories += val.trim().parse::<usize>()?;
+            }
+
+            elves.push(Elf { calories })
+        }
 
         Ok(Self { elves })
     }
