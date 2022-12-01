@@ -16,3 +16,4 @@ clap = { version = "4", features = ["cargo", "derive", "wrap_help"] }
 clap_complete = "4"
 serde = { workspace = true }
 serde_json = { workspace = true }
+calorie-counting = { path = "../day-001-calorie-counting" }

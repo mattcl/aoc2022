@@ -13,3 +13,4 @@ criterion = "0.4.0"
 
 [dependencies]
 aoc-plumbing = { path = "../aoc-plumbing" }
+calorie-counting = { path = "../day-001-calorie-counting" }

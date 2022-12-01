@@ -1,9 +1,13 @@
-use std::{marker::PhantomData, path::{PathBuf, Path}};
+use std::{
+    marker::PhantomData,
+    path::{Path, PathBuf},
+};
 
-use clap::{Args, Subcommand, Parser, CommandFactory};
-use clap_complete::{shells::Zsh, generate};
 use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
+use calorie_counting::CalorieCounting;
+use clap::{Args, CommandFactory, Parser, Subcommand};
+use clap_complete::{generate, shells::Zsh};
 // import_marker
 
 // I'm not proud
@@ -108,8 +112,7 @@ where
     T: Problem,
     <T as Problem>::ProblemError: Into<anyhow::Error>,
 {
-    let input = std::fs::read_to_string(input_file)
-        .context("Could not read input file")?;
+    let input = std::fs::read_to_string(input_file).context("Could not read input file")?;
 
     let solution = T::solve(&input)
         .map_err(Into::<anyhow::Error>::into)
@@ -136,5 +139,6 @@ impl GenerateCompletions {
 }
 
 generate_cli! {
+    (CalorieCounting, 1),
     // command_marker
 }

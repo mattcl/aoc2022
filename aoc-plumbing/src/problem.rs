@@ -1,4 +1,4 @@
-use std::{str::FromStr, fmt::Display};
+use std::{fmt::Display, str::FromStr};
 
 use serde::Serialize;
 
@@ -99,7 +99,11 @@ pub trait Problem: FromStr {
     }
 
     fn problem_label() -> String {
-        format!("{:03} {}", <Self as Problem>::padded_day(), <Self as Problem>::TITLE)
+        format!(
+            "{:03} {}",
+            <Self as Problem>::padded_day(),
+            <Self as Problem>::TITLE
+        )
     }
 
     fn padded_day() -> String {
@@ -107,6 +111,10 @@ pub trait Problem: FromStr {
     }
 
     fn long_description() -> String {
-        format!("{} {}", <Self as Problem>::padded_day(), <Self as Problem>::README)
+        format!(
+            "{} {}",
+            <Self as Problem>::padded_day(),
+            <Self as Problem>::README
+        )
     }
 }

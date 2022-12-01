@@ -1,0 +1,43 @@
+resources:
+  - name: repo
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/mattcl/aoc2022.git
+
+  - name: aoc-inputs
+    type: git
+    icon: github
+    source:
+      uri: https://github.com/mattcl/aoc-aggregated-inputs.git
+      branch: master
+      ignore_paths:
+        - '**/application-benches.md'
+        - '**/solutions.md'
+
+  # this is the same repository as the aoc-inputs resource, but this one allows
+  # writes (this is done to avoid new concourse version detection for ignored
+  # paths) see https://github.com/concourse/git-resource
+  - name: aoc-inputs-write
+    type: git
+    icon: github
+    source:
+      uri: git@github.com:mattcl/aoc-aggregated-inputs.git
+      branch: master
+      private_key: ((aoc-inputs.deploy_key))
+
+jobs:
+  - name: collect-inputs
+    public: true
+    serial_groups: [collection]
+    build_log_retention:
+      builds: 50
+    plan:
+      - in_parallel:
+        - get: aoc-inputs
+          trigger: false
+        - get: repo
+          trigger: true
+      - task: collect
+        file: repo/ci/tasks/collect-inputs.yml
+

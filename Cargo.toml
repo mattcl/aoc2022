@@ -3,7 +3,7 @@ members = [
     "aoc-benchmarking",
     "aoc-cli",
     "aoc-plumbing",
-    # "day-*",
+    "day-*",
 ]
 
 exclude = ["template"]
