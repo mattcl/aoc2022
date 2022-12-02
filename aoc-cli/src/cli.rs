@@ -134,7 +134,7 @@ pub struct GenerateCompletions;
 
 impl GenerateCompletions {
     fn run(&self) -> Result<()> {
-        generate(Zsh, &mut Cli::command(), "florist", &mut std::io::stdout());
+        generate(Zsh, &mut Cli::command(), "aoc", &mut std::io::stdout());
         Ok(())
     }
 }
