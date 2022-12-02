@@ -4,13 +4,13 @@ use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum Desire {
+pub enum Outcome {
     Win,
     Lose,
     Draw,
 }
 
-impl FromStr for Desire {
+impl FromStr for Outcome {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
@@ -39,52 +39,44 @@ impl Choice {
         }
     }
 
-    pub fn match_desire(&self, desire: &Desire) -> Self {
+    pub fn match_desire(&self, desire: &Outcome) -> Self {
         match self {
             Self::Rock => match desire {
-                Desire::Win => Self::Paper,
-                Desire::Lose => Self::Scissors,
-                Desire::Draw => Self::Rock,
+                Outcome::Win => Self::Paper,
+                Outcome::Lose => Self::Scissors,
+                Outcome::Draw => Self::Rock,
             },
             Self::Paper => match desire {
-                Desire::Win => Self::Scissors,
-                Desire::Lose => Self::Rock,
-                Desire::Draw => Self::Paper,
+                Outcome::Win => Self::Scissors,
+                Outcome::Lose => Self::Rock,
+                Outcome::Draw => Self::Paper,
             },
             Self::Scissors => match desire {
-                Desire::Win => Self::Rock,
-                Desire::Lose => Self::Paper,
-                Desire::Draw => Self::Scissors,
+                Outcome::Win => Self::Rock,
+                Outcome::Lose => Self::Paper,
+                Outcome::Draw => Self::Scissors,
             },
         }
     }
-}
 
-impl Ord for Choice {
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+    pub fn evaluate(&self, other: &Self) -> Outcome {
         match self {
             Self::Rock => match other {
-                Self::Rock => std::cmp::Ordering::Equal,
-                Self::Paper => std::cmp::Ordering::Less,
-                Self::Scissors => std::cmp::Ordering::Greater,
+                Self::Rock => Outcome::Draw,
+                Self::Paper => Outcome::Lose,
+                Self::Scissors => Outcome::Win,
             },
             Self::Paper => match other {
-                Self::Rock => std::cmp::Ordering::Greater,
-                Self::Paper => std::cmp::Ordering::Equal,
-                Self::Scissors => std::cmp::Ordering::Less,
+                Self::Rock => Outcome::Win,
+                Self::Paper => Outcome::Draw,
+                Self::Scissors => Outcome::Lose,
             },
             Self::Scissors => match other {
-                Self::Rock => std::cmp::Ordering::Less,
-                Self::Paper => std::cmp::Ordering::Greater,
-                Self::Scissors => std::cmp::Ordering::Equal,
+                Self::Rock => Outcome::Lose,
+                Self::Paper => Outcome::Win,
+                Self::Scissors => Outcome::Draw,
             },
         }
-    }
-}
-
-impl PartialOrd for Choice {
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(other))
     }
 }
 
@@ -105,26 +97,26 @@ impl FromStr for Choice {
 pub struct Round {
     other: Choice,
     you: Choice,
-    desire: Desire,
+    desire: Outcome,
 }
 
 impl Round {
     pub fn score(&self) -> usize {
         let score = self.you.score();
 
-        match self.you.cmp(&self.other) {
-            std::cmp::Ordering::Greater => 6 + score,
-            std::cmp::Ordering::Equal => 3 + score,
-            std::cmp::Ordering::Less => score,
+        match self.you.evaluate(&self.other) {
+            Outcome::Win => 6 + score,
+            Outcome::Draw => 3 + score,
+            Outcome::Lose => score,
         }
     }
 
     pub fn score_desired(&self) -> usize {
         let score = self.other.match_desire(&self.desire).score();
         match self.desire {
-            Desire::Win => 6 + score,
-            Desire::Draw => 3 + score,
-            Desire::Lose => score,
+            Outcome::Win => 6 + score,
+            Outcome::Draw => 3 + score,
+            Outcome::Lose => score,
         }
     }
 }
@@ -137,7 +129,7 @@ impl FromStr for Round {
         let other = Choice::from_str(iter.next().ok_or_else(|| anyhow!("invalid input: {}", s))?)?;
         let second = iter.next().ok_or_else(|| anyhow!("invalid input: {}", s))?;
         let you = Choice::from_str(second)?;
-        let desire = Desire::from_str(second)?;
+        let desire = Outcome::from_str(second)?;
 
         Ok(Self { other, you, desire })
     }
@@ -207,35 +199,34 @@ mod tests {
 
     #[test]
     fn choice_ordering() {
-        // there are duplicate checks, but just reversing rhs/lhs
-        assert!(Choice::Rock > Choice::Scissors);
-        assert!(Choice::Rock == Choice::Rock);
-        assert!(Choice::Rock < Choice::Paper);
+        assert_eq!(Choice::Rock.evaluate(&Choice::Rock), Outcome::Draw);
+        assert_eq!(Choice::Rock.evaluate(&Choice::Paper), Outcome::Lose);
+        assert_eq!(Choice::Rock.evaluate(&Choice::Scissors), Outcome::Win);
 
-        assert!(Choice::Paper > Choice::Rock);
-        assert!(Choice::Paper == Choice::Paper);
-        assert!(Choice::Paper < Choice::Scissors);
+        assert_eq!(Choice::Paper.evaluate(&Choice::Rock), Outcome::Win);
+        assert_eq!(Choice::Paper.evaluate(&Choice::Paper), Outcome::Draw);
+        assert_eq!(Choice::Paper.evaluate(&Choice::Scissors), Outcome::Lose);
 
-        assert!(Choice::Scissors > Choice::Paper);
-        assert!(Choice::Scissors == Choice::Scissors);
-        assert!(Choice::Scissors < Choice::Rock);
+        assert_eq!(Choice::Scissors.evaluate(&Choice::Rock), Outcome::Lose);
+        assert_eq!(Choice::Scissors.evaluate(&Choice::Paper), Outcome::Win);
+        assert_eq!(Choice::Scissors.evaluate(&Choice::Scissors), Outcome::Draw);
     }
 
     #[test]
     fn desires() {
-        assert_eq!(Choice::Rock.match_desire(&Desire::Win), Choice::Paper);
-        assert_eq!(Choice::Rock.match_desire(&Desire::Draw), Choice::Rock);
-        assert_eq!(Choice::Rock.match_desire(&Desire::Lose), Choice::Scissors);
+        assert_eq!(Choice::Rock.match_desire(&Outcome::Win), Choice::Paper);
+        assert_eq!(Choice::Rock.match_desire(&Outcome::Draw), Choice::Rock);
+        assert_eq!(Choice::Rock.match_desire(&Outcome::Lose), Choice::Scissors);
 
-        assert_eq!(Choice::Paper.match_desire(&Desire::Win), Choice::Scissors);
-        assert_eq!(Choice::Paper.match_desire(&Desire::Draw), Choice::Paper);
-        assert_eq!(Choice::Paper.match_desire(&Desire::Lose), Choice::Rock);
+        assert_eq!(Choice::Paper.match_desire(&Outcome::Win), Choice::Scissors);
+        assert_eq!(Choice::Paper.match_desire(&Outcome::Draw), Choice::Paper);
+        assert_eq!(Choice::Paper.match_desire(&Outcome::Lose), Choice::Rock);
 
-        assert_eq!(Choice::Scissors.match_desire(&Desire::Win), Choice::Rock);
+        assert_eq!(Choice::Scissors.match_desire(&Outcome::Win), Choice::Rock);
         assert_eq!(
-            Choice::Scissors.match_desire(&Desire::Draw),
+            Choice::Scissors.match_desire(&Outcome::Draw),
             Choice::Scissors
         );
-        assert_eq!(Choice::Scissors.match_desire(&Desire::Lose), Choice::Paper);
+        assert_eq!(Choice::Scissors.match_desire(&Outcome::Lose), Choice::Paper);
     }
 }
