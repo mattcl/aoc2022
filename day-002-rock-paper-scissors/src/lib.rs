@@ -204,4 +204,38 @@ mod tests {
         let solution = RockPaperScissors::solve(input).unwrap();
         assert_eq!(solution, Solution::new(15, 12));
     }
+
+    #[test]
+    fn choice_ordering() {
+        // there are duplicate checks, but just reversing rhs/lhs
+        assert!(Choice::Rock > Choice::Scissors);
+        assert!(Choice::Rock == Choice::Rock);
+        assert!(Choice::Rock < Choice::Paper);
+
+        assert!(Choice::Paper > Choice::Rock);
+        assert!(Choice::Paper == Choice::Paper);
+        assert!(Choice::Paper < Choice::Scissors);
+
+        assert!(Choice::Scissors > Choice::Paper);
+        assert!(Choice::Scissors == Choice::Scissors);
+        assert!(Choice::Scissors < Choice::Rock);
+    }
+
+    #[test]
+    fn desires() {
+        assert_eq!(Choice::Rock.match_desire(&Desire::Win), Choice::Paper);
+        assert_eq!(Choice::Rock.match_desire(&Desire::Draw), Choice::Rock);
+        assert_eq!(Choice::Rock.match_desire(&Desire::Lose), Choice::Scissors);
+
+        assert_eq!(Choice::Paper.match_desire(&Desire::Win), Choice::Scissors);
+        assert_eq!(Choice::Paper.match_desire(&Desire::Draw), Choice::Paper);
+        assert_eq!(Choice::Paper.match_desire(&Desire::Lose), Choice::Rock);
+
+        assert_eq!(Choice::Scissors.match_desire(&Desire::Win), Choice::Rock);
+        assert_eq!(
+            Choice::Scissors.match_desire(&Desire::Draw),
+            Choice::Scissors
+        );
+        assert_eq!(Choice::Scissors.match_desire(&Desire::Lose), Choice::Paper);
+    }
 }
