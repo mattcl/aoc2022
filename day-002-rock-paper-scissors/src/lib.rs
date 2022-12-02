@@ -4,6 +4,26 @@ use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum Desire {
+    Win,
+    Lose,
+    Draw,
+}
+
+impl FromStr for Desire {
+    type Err = anyhow::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "X" => Ok(Self::Lose),
+            "Y" => Ok(Self::Draw),
+            "Z" => Ok(Self::Win),
+            _ => bail!("Invalid input for desire: {}", s),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Choice {
     Rock,
     Paper,
@@ -120,26 +140,6 @@ impl FromStr for Round {
         let desire = Desire::from_str(second)?;
 
         Ok(Self { other, you, desire })
-    }
-}
-
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum Desire {
-    Win,
-    Lose,
-    Draw,
-}
-
-impl FromStr for Desire {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "X" => Ok(Self::Lose),
-            "Y" => Ok(Self::Draw),
-            "Z" => Ok(Self::Win),
-            _ => bail!("Invalid input for desire: {}", s),
-        }
     }
 }
 
