@@ -17,3 +17,4 @@ clap_complete = "4"
 serde = { workspace = true }
 serde_json = { workspace = true }
 calorie-counting = { path = "../day-001-calorie-counting" }
+rock-paper-scissors = { path = "../day-002-rock-paper-scissors" }

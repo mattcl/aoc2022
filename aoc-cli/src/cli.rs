@@ -8,6 +8,7 @@ use aoc_plumbing::Problem;
 use calorie_counting::CalorieCounting;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
+use rock_paper_scissors::RockPaperScissors;
 // import_marker
 
 // I'm not proud
@@ -140,5 +141,6 @@ impl GenerateCompletions {
 
 generate_cli! {
     (CalorieCounting, 1),
+    (RockPaperScissors, 2),
     // command_marker
 }

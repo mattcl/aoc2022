@@ -21,6 +21,7 @@ dependencies = [
  "aoc-plumbing",
  "calorie-counting",
  "criterion",
+ "rock-paper-scissors",
 ]
 
 [[package]]
@@ -32,6 +33,7 @@ dependencies = [
  "calorie-counting",
  "clap 4.0.26",
  "clap_complete",
+ "rock-paper-scissors",
  "serde",
  "serde_json",
 ]
@@ -628,6 +630,16 @@ name = "regex-syntax"
 version = "0.6.28"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "456c603be3e8d448b072f410900c09faf164fbce2d480456f50eea6e25f9c848"
+
+[[package]]
+name = "rock-paper-scissors"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "serde",
+]
 
 [[package]]
 name = "rustix"
