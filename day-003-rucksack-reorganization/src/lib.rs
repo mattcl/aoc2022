@@ -89,11 +89,10 @@ impl Problem for RucksackReorganization {
             .rucksacks
             .chunks(3)
             .map(|chunk| {
-                let mut sets = chunk.iter().map(|r| r.union());
+                let mut reduced = chunk[0].union();
+                let rem = &chunk[1..];
 
-                let mut reduced = sets.next().unwrap();
-                let remaining: Vec<FxHashSet<_>> = sets.collect();
-                reduced.retain(|item| remaining.iter().all(|s| s.contains(item)));
+                reduced.retain(|item| rem.iter().all(|r| r.one.contains(item) || r.two.contains(item)));
 
                 reduced.iter().map(|v| char_to_priority(**v)).sum::<usize>()
             })
