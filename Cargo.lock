@@ -22,6 +22,7 @@ dependencies = [
  "calorie-counting",
  "criterion",
  "rock-paper-scissors",
+ "rucksack-reorganization",
 ]
 
 [[package]]
@@ -34,6 +35,7 @@ dependencies = [
  "clap 4.0.26",
  "clap_complete",
  "rock-paper-scissors",
+ "rucksack-reorganization",
  "serde",
  "serde_json",
 ]
@@ -640,6 +642,25 @@ dependencies = [
  "aoc_helpers",
  "serde",
 ]
+
+[[package]]
+name = "rucksack-reorganization"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "itertools",
+ "rayon",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustix"
