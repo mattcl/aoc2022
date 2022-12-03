@@ -650,8 +650,6 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "aoc_helpers",
- "itertools",
- "rayon",
  "rustc-hash",
  "serde",
 ]

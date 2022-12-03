@@ -2,7 +2,6 @@ use std::str::FromStr;
 
 use anyhow::bail;
 use aoc_plumbing::Problem;
-use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 
 #[inline]
@@ -60,7 +59,7 @@ impl FromStr for RucksackReorganization {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let rucksacks = s
             .trim()
-            .par_lines()
+            .lines()
             .map(|l| Rucksack::from_str(l.trim()))
             .collect::<Result<Vec<_>, _>>()?;
 
