@@ -122,7 +122,7 @@ mod tests {
     fn full_dataset() {
         let input = std::fs::read_to_string("input.txt").expect("Unable to load input");
         let solution = CampCleanup::solve(&input).unwrap();
-        assert_eq!(solution, Solution::new(494, 0));
+        assert_eq!(solution, Solution::new(494, 833));
     }
 
     #[test]
