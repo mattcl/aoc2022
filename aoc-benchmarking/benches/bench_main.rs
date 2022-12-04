@@ -2,6 +2,7 @@ use criterion::criterion_main;
 
 use aoc_benchmarking::aoc_benches;
 use calorie_counting::CalorieCounting;
+use camp_cleanup::CampCleanup;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 // import_marker
@@ -30,6 +31,13 @@ aoc_benches! {
         day_003,
         "../day-003-rucksack-reorganization/input.txt",
         RucksackReorganization,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_004,
+        "../day-004-camp-cleanup/input.txt",
+        CampCleanup,
         "Part 1",
         "Part 2"
     ),

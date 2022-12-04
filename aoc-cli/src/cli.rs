@@ -6,6 +6,7 @@ use std::{
 use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
 use calorie_counting::CalorieCounting;
+use camp_cleanup::CampCleanup;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use rock_paper_scissors::RockPaperScissors;
@@ -144,5 +145,6 @@ generate_cli! {
     (CalorieCounting, 1),
     (RockPaperScissors, 2),
     (RucksackReorganization, 3),
+    (CampCleanup, 4),
     // command_marker
 }

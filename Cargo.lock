@@ -20,6 +20,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-plumbing",
  "calorie-counting",
+ "camp-cleanup",
  "criterion",
  "rock-paper-scissors",
  "rucksack-reorganization",
@@ -32,6 +33,7 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "calorie-counting",
+ "camp-cleanup",
  "clap 4.0.26",
  "clap_complete",
  "rock-paper-scissors",
@@ -96,6 +98,16 @@ dependencies = [
  "aoc-plumbing",
  "aoc_helpers",
  "itertools",
+ "serde",
+]
+
+[[package]]
+name = "camp-cleanup"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
  "serde",
 ]
 
