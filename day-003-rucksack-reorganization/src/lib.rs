@@ -2,33 +2,42 @@ use std::str::FromStr;
 
 use anyhow::bail;
 use aoc_plumbing::Problem;
-use rustc_hash::FxHashSet;
 
 #[inline]
-fn char_to_priority(ch: char) -> usize {
-    if ch.is_lowercase() {
-        ((ch as u8) - ('a' as u8) + 1) as usize
+fn char_to_mask(ch: char) -> u64 {
+    let v = if ch.is_lowercase() {
+        ((ch as u8) - ('a' as u8)) as usize
     } else {
-        ((ch as u8) - ('A' as u8) + 27) as usize
-    }
+        ((ch as u8) - ('A' as u8) + 26) as usize
+    };
+    mask(v)
+}
+
+#[inline]
+fn mask(shift: usize) -> u64 {
+    1 << shift
+}
+
+#[inline]
+fn priority_sum_from_bin(bin: u64) -> usize {
+    (0..52)
+        .map(|v| if (1 << v) & bin > 0 { v + 1 } else { 0 })
+        .sum()
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Rucksack {
-    one: FxHashSet<char>,
-    two: FxHashSet<char>,
+    one: u64,
+    two: u64,
 }
 
 impl Rucksack {
-    pub fn dupcate_priorities(&self) -> usize {
-        self.one
-            .intersection(&self.two)
-            .map(|v| char_to_priority(*v))
-            .sum()
+    pub fn duplicate_priorities(&self) -> usize {
+        priority_sum_from_bin(self.one & self.two)
     }
 
-    pub fn union(&self) -> FxHashSet<&char> {
-        self.one.union(&self.two).collect()
+    pub fn union(&self) -> u64 {
+        self.one | self.two
     }
 }
 
@@ -41,8 +50,8 @@ impl FromStr for Rucksack {
         }
 
         let mid = s.len() / 2;
-        let one = s[0..mid].chars().collect();
-        let two = s[mid..].chars().collect();
+        let one = s[0..mid].chars().fold(0, |acc, ch| acc | char_to_mask(ch));
+        let two = s[mid..].chars().fold(0, |acc, ch| acc | char_to_mask(ch));
 
         Ok(Self { one, two })
     }
@@ -77,7 +86,11 @@ impl Problem for RucksackReorganization {
     type P2 = usize;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        Ok(self.rucksacks.iter().map(|r| r.dupcate_priorities()).sum())
+        Ok(self
+            .rucksacks
+            .iter()
+            .map(|r| r.duplicate_priorities())
+            .sum())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
@@ -89,12 +102,11 @@ impl Problem for RucksackReorganization {
             .rucksacks
             .chunks(3)
             .map(|chunk| {
-                let mut reduced = chunk[0].union();
-                let rem = &chunk[1..];
-
-                reduced.retain(|item| rem.iter().all(|r| r.one.contains(item) || r.two.contains(item)));
-
-                reduced.iter().map(|v| char_to_priority(**v)).sum::<usize>()
+                priority_sum_from_bin(
+                    chunk
+                        .iter()
+                        .fold(chunk[0].union(), |acc, r| acc & r.union()),
+                )
             })
             .sum();
 
