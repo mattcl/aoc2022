@@ -42,8 +42,7 @@ impl Pair {
     }
 
     pub fn partial_overlap(&self) -> bool {
-        !((self.left.end < self.right.start) || (self.right.end < self.left.start))
-            || self.complete_overlap()
+        !(self.left.end < self.right.start) && !(self.right.end < self.left.start)
     }
 }
 

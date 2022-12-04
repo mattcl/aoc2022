@@ -22,6 +22,7 @@ run:
   args:
     - "-c"
     - |
+      set -e
       cargo check
       cargo test
       cargo test --release -- --ignored
