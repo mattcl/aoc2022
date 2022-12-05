@@ -37,13 +37,11 @@ fn parse_num(input: &str) -> IResult<&str, usize> {
 }
 
 fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
-    let (input, (quantity, start, end)) = tuple(
-        (
-            preceded(tag("move "), parse_num),
-            preceded(tag(" from "), parse_num),
-            preceded(tag(" to "), parse_num)
-        )
-    )(input)?;
+    let (input, (quantity, start, end)) = tuple((
+        preceded(tag("move "), parse_num),
+        preceded(tag(" from "), parse_num),
+        preceded(tag(" to "), parse_num),
+    ))(input)?;
 
     Ok((
         input,
@@ -100,6 +98,13 @@ impl Dock {
 
         Ok(())
     }
+
+    pub fn top_values(&self) -> String {
+        self.columns
+            .iter()
+            .filter_map(|c| c.crates.last())
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -116,21 +121,27 @@ impl FromStr for SupplyStacks {
             .split_once("\n\n")
             .ok_or_else(|| anyhow!("Invalid input, no separating newline"))?;
 
+        // let's get the last line of the picture and find every char index
+        // corresponding to a numeric character
         let mut iter = picture.lines().rev();
         let index_line = iter
             .next()
             .ok_or_else(|| anyhow!("Invalid input missing index line"))?;
-        // find numeric indicies, unwrap is safe because we just checked
+
         let indicies: Vec<_> = index_line
             .chars()
             .enumerate()
             .filter(|(_, ch)| ch.is_digit(10))
             .collect();
 
+        // Now, if we found more than 9, we have a problem because our strategy
+        // relies on column alignment, so I'm going to bail here
         if indicies.len() > 9 {
             bail!("I am only allowing for up to 9 stacks")
         }
 
+        // with the remaining lines, we're going to find every alpha char in a
+        // column that matches an index we discovered
         let picture_lines: Vec<Vec<char>> = iter.map(|l| l.chars().collect::<Vec<_>>()).collect();
 
         if picture_lines.is_empty() {
@@ -138,9 +149,9 @@ impl FromStr for SupplyStacks {
         }
 
         let mut columns: Vec<_> = (0..indicies.len()).map(|_| Column::default()).collect();
-
         for (col, (idx, _)) in indicies.iter().enumerate() {
             for line_idx in 0..picture_lines.len() {
+                // if we have uneven lines, the get will guard against that
                 if let Some(v) = picture_lines[line_idx]
                     .get(*idx)
                     .filter(|v| v.is_alphanum())
@@ -150,7 +161,7 @@ impl FromStr for SupplyStacks {
             }
         }
 
-        // for each additional line
+        // for each additional line, parse as instructions
         let instructions = insts
             .trim()
             .lines()
@@ -174,33 +185,23 @@ impl Problem for SupplyStacks {
     type P2 = String;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
+        // we need to clone here so we don't mess with part two (and the bench)
         let mut dock = self.dock.clone();
         for inst in self.instructions.iter() {
             dock.carry_out(inst)?;
         }
 
-        let s = dock
-            .columns
-            .iter_mut()
-            .filter_map(|c| c.crates.pop())
-            .collect();
-
-        Ok(s)
+        Ok(dock.top_values())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
+        // we need to clone here so we don't mess with the bench
         let mut dock = self.dock.clone();
         for inst in self.instructions.iter() {
             dock.carry_out_advanced(inst)?;
         }
 
-        let s = dock
-            .columns
-            .iter_mut()
-            .filter_map(|c| c.crates.pop())
-            .collect();
-
-        Ok(s)
+        Ok(dock.top_values())
     }
 }
 
@@ -234,5 +235,28 @@ move 2 from 2 to 1
 move 1 from 1 to 2";
         let solution = SupplyStacks::solve(input).unwrap();
         assert_eq!(solution, Solution::new("CMZ".into(), "MCD".into()));
+    }
+
+    #[test]
+    fn instruction_parsing() {
+        let res = Instruction::from_str("move 10 from 2 to 999").unwrap();
+        assert_eq!(
+            res,
+            Instruction {
+                quantity: 10,
+                start: 2,
+                end: 999
+            }
+        );
+
+        let res = Instruction::from_str("move 1 from 2 to 3").unwrap();
+        assert_eq!(
+            res,
+            Instruction {
+                quantity: 1,
+                start: 2,
+                end: 3
+            }
+        );
     }
 }
