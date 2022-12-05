@@ -4,8 +4,7 @@ use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
 use nom::{
     bytes::complete::tag,
-    character::complete::digit1,
-    combinator::{map_res, recognize},
+    character,
     sequence::{preceded, tuple},
     AsChar, IResult,
 };
@@ -26,52 +25,50 @@ impl FromStr for Instruction {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, inst) =
+        let (_, (quantity, start, end)) =
             parse_instruction(s.trim()).map_err(|_| anyhow!("Failed to parse: {}", s))?;
-        Ok(inst)
+
+        if quantity == 0 || start == 0 || end == 0 {
+            bail!("Invalid instruction: {}", s);
+        }
+
+        Ok(Instruction {
+            quantity: quantity as usize,
+            start: start as usize - 1,
+            end: end as usize - 1,
+        })
     }
 }
 
-fn parse_num(input: &str) -> IResult<&str, usize> {
-    map_res(recognize(digit1), usize::from_str)(input)
-}
-
-fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
+fn parse_instruction(input: &str) -> IResult<&str, (u64, u64, u64)> {
     let (input, (quantity, start, end)) = tuple((
-        preceded(tag("move "), parse_num),
-        preceded(tag(" from "), parse_num),
-        preceded(tag(" to "), parse_num),
+        preceded(tag("move "), character::complete::u64),
+        preceded(tag(" from "), character::complete::u64),
+        preceded(tag(" to "), character::complete::u64),
     ))(input)?;
 
-    Ok((
-        input,
-        Instruction {
-            quantity,
-            start,
-            end,
-        },
-    ))
+    Ok((input, (quantity, start, end)))
 }
 
 // Use an intermediate object for indirection so I can clone this and not the
 // problem
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
-pub struct Dock {
+pub struct Ship {
     columns: Vec<Column>,
 }
 
-impl Dock {
+impl Ship {
     pub fn carry_out(&mut self, instruction: &Instruction) -> Result<(), anyhow::Error> {
         if self.columns.len() < instruction.start || self.columns.len() < instruction.end {
             bail!("Invalid instruction: {:?}", instruction);
         }
 
         for _ in 0..instruction.quantity {
-            let k = self.columns[instruction.start - 1]
+            let k = self.columns[instruction.start]
                 .crates
                 .pop()
                 .ok_or_else(|| anyhow!("attempted to remove from empty stack"))?;
-            self.columns[instruction.end - 1].crates.push(k);
+            self.columns[instruction.end].crates.push(k);
         }
 
         Ok(())
@@ -85,7 +82,7 @@ impl Dock {
         let mut acc = VecDeque::with_capacity(instruction.quantity);
         for _ in 0..instruction.quantity {
             acc.push_front(
-                self.columns[instruction.start - 1]
+                self.columns[instruction.start]
                     .crates
                     .pop()
                     .ok_or_else(|| anyhow!("attempted to remove from empty stack"))?,
@@ -93,7 +90,7 @@ impl Dock {
         }
 
         for k in acc {
-            self.columns[instruction.end - 1].crates.push(k);
+            self.columns[instruction.end].crates.push(k);
         }
 
         Ok(())
@@ -109,7 +106,7 @@ impl Dock {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct SupplyStacks {
-    dock: Dock,
+    ship: Ship,
     instructions: Vec<Instruction>,
 }
 
@@ -169,7 +166,7 @@ impl FromStr for SupplyStacks {
             .collect::<Result<Vec<_>, _>>()?;
 
         Ok(Self {
-            dock: Dock { columns },
+            ship: Ship { columns },
             instructions,
         })
     }
@@ -186,22 +183,22 @@ impl Problem for SupplyStacks {
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
         // we need to clone here so we don't mess with part two (and the bench)
-        let mut dock = self.dock.clone();
+        let mut ship = self.ship.clone();
         for inst in self.instructions.iter() {
-            dock.carry_out(inst)?;
+            ship.carry_out(inst)?;
         }
 
-        Ok(dock.top_values())
+        Ok(ship.top_values())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
         // we need to clone here so we don't mess with the bench
-        let mut dock = self.dock.clone();
+        let mut ship = self.ship.clone();
         for inst in self.instructions.iter() {
-            dock.carry_out_advanced(inst)?;
+            ship.carry_out_advanced(inst)?;
         }
 
-        Ok(dock.top_values())
+        Ok(ship.top_values())
     }
 }
 
@@ -244,18 +241,18 @@ move 1 from 1 to 2";
             res,
             Instruction {
                 quantity: 10,
-                start: 2,
-                end: 999
+                start: 1,
+                end: 998
             }
         );
 
-        let res = Instruction::from_str("move 1 from 2 to 3").unwrap();
+        let res = Instruction::from_str("move 1 from 1 to 3").unwrap();
         assert_eq!(
             res,
             Instruction {
                 quantity: 1,
-                start: 2,
-                end: 3
+                start: 0,
+                end: 2
             }
         );
     }
