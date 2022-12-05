@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, str::FromStr};
+use std::str::FromStr;
 
 use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
@@ -75,23 +75,24 @@ impl Ship {
     }
 
     pub fn carry_out_advanced(&mut self, instruction: &Instruction) -> Result<(), anyhow::Error> {
-        if self.columns.len() < instruction.start || self.columns.len() < instruction.end {
+        if self.columns.len() <= instruction.start || self.columns.len() <= instruction.end {
             bail!("Invalid instruction: {:?}", instruction);
         }
 
-        let mut acc = VecDeque::with_capacity(instruction.quantity);
-        for _ in 0..instruction.quantity {
-            acc.push_front(
-                self.columns[instruction.start]
-                    .crates
-                    .pop()
-                    .ok_or_else(|| anyhow!("attempted to remove from empty stack"))?,
-            );
+        let len = self.columns[instruction.start].crates.len();
+
+        if len < instruction.quantity {
+            bail!("Not enough elements to move");
         }
 
-        for k in acc {
-            self.columns[instruction.end].crates.push(k);
+        for i in (len - instruction.quantity)..len {
+            let v = self.columns[instruction.start].crates[i];
+            self.columns[instruction.end].crates.push(v);
         }
+
+        self.columns[instruction.start]
+            .crates
+            .truncate(len - instruction.quantity);
 
         Ok(())
     }
