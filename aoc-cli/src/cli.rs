@@ -11,6 +11,7 @@ use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
+use supply_stacks::SupplyStacks;
 // import_marker
 
 // I'm not proud
@@ -146,5 +147,6 @@ generate_cli! {
     (RockPaperScissors, 2),
     (RucksackReorganization, 3),
     (CampCleanup, 4),
+    (SupplyStacks, 5),
     // command_marker
 }
