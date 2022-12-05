@@ -20,9 +20,19 @@ fn mask(shift: usize) -> u64 {
 
 #[inline]
 fn priority_sum_from_bin(bin: u64) -> usize {
-    (0..52)
-        .map(|v| if (1 << v) & bin > 0 { v + 1 } else { 0 })
-        .sum()
+    let mut offset = bin.trailing_zeros() as usize;
+    let mut shifted = bin;
+    let mut total_shift = 0_usize;
+    let mut sum = 0;
+
+    while shifted > 0 {
+        shifted = shifted >> (offset + 1);
+        total_shift += offset + 1;
+        sum += total_shift;
+        offset = shifted.trailing_zeros() as usize;
+    }
+
+    sum
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
