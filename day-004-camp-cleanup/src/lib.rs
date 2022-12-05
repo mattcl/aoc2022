@@ -106,15 +106,14 @@ mod tests {
 
     #[test]
     fn example() {
-        let input = "
-            2-4,6-8
-            2-3,4-5
-            5-7,7-9
-            2-8,3-7
-            6-6,4-6
-            2-6,4-8
-            ";
-        let solution = CampCleanup::solve(input).unwrap();
+        let input = " 2-4,6-8
+2-3,4-5
+5-7,7-9
+2-8,3-7
+6-6,4-6
+2-6,4-8 ";
+        dbg!(&input);
+        let solution = CampCleanup::solve(&input).unwrap();
         assert_eq!(solution, Solution::new(2, 4));
     }
 }
