@@ -6,13 +6,13 @@ use nom::{
     bytes::complete::tag,
     character::complete::digit1,
     combinator::{map_res, recognize},
-    sequence::preceded,
+    sequence::{preceded, tuple},
     AsChar, IResult,
 };
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct Column {
-    crates: VecDeque<char>,
+    crates: Vec<char>,
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
@@ -37,9 +37,13 @@ fn parse_num(input: &str) -> IResult<&str, usize> {
 }
 
 fn parse_instruction(input: &str) -> IResult<&str, Instruction> {
-    let (input, quantity) = preceded(tag("move "), parse_num)(input)?;
-    let (input, start) = preceded(tag(" from "), parse_num)(input)?;
-    let (input, end) = preceded(tag(" to "), parse_num)(input)?;
+    let (input, (quantity, start, end)) = tuple(
+        (
+            preceded(tag("move "), parse_num),
+            preceded(tag(" from "), parse_num),
+            preceded(tag(" to "), parse_num)
+        )
+    )(input)?;
 
     Ok((
         input,
@@ -67,9 +71,9 @@ impl Dock {
         for _ in 0..instruction.quantity {
             let k = self.columns[instruction.start - 1]
                 .crates
-                .pop_back()
+                .pop()
                 .ok_or_else(|| anyhow!("attempted to remove from empty stack"))?;
-            self.columns[instruction.end - 1].crates.push_back(k);
+            self.columns[instruction.end - 1].crates.push(k);
         }
 
         Ok(())
@@ -85,13 +89,13 @@ impl Dock {
             acc.push_front(
                 self.columns[instruction.start - 1]
                     .crates
-                    .pop_back()
+                    .pop()
                     .ok_or_else(|| anyhow!("attempted to remove from empty stack"))?,
             );
         }
 
         for k in acc {
-            self.columns[instruction.end - 1].crates.push_back(k);
+            self.columns[instruction.end - 1].crates.push(k);
         }
 
         Ok(())
@@ -141,7 +145,7 @@ impl FromStr for SupplyStacks {
                     .get(*idx)
                     .filter(|v| v.is_alphanum())
                 {
-                    columns[col].crates.push_back(*v);
+                    columns[col].crates.push(*v);
                 }
             }
         }
@@ -178,7 +182,7 @@ impl Problem for SupplyStacks {
         let s = dock
             .columns
             .iter_mut()
-            .filter_map(|c| c.crates.pop_back())
+            .filter_map(|c| c.crates.pop())
             .collect();
 
         Ok(s)
@@ -193,7 +197,7 @@ impl Problem for SupplyStacks {
         let s = dock
             .columns
             .iter_mut()
-            .filter_map(|c| c.crates.pop_back())
+            .filter_map(|c| c.crates.pop())
             .collect();
 
         Ok(s)

@@ -2,6 +2,10 @@
 new DAY NAME:
     scripts/new.sh {{DAY}} {{NAME}}
 
+# run all integration tests
+test:
+    cargo test --release -- --ignored
+
 # run benchmarks for a given padded day `just bench 001`
 bench DAY:
     cargo bench -p aoc-benchmarking -- {{DAY}}
