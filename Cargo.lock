@@ -110,6 +110,7 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "aoc_helpers",
+ "nom",
  "serde",
 ]
 

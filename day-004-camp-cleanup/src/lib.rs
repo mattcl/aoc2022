@@ -1,32 +1,12 @@
 use std::str::FromStr;
 
-use anyhow::bail;
 use aoc_plumbing::Problem;
+use nom::{bytes::complete::tag, character::complete, sequence::separated_pair, IResult};
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Assignment {
-    start: usize,
-    end: usize,
-}
-
-impl FromStr for Assignment {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let vals = s
-            .trim()
-            .split('-')
-            .map(|v| v.parse::<usize>())
-            .collect::<Result<Vec<_>, _>>()?;
-        if vals.len() != 2 {
-            bail!("Invalid assignment: {}", s);
-        }
-
-        Ok(Self {
-            start: vals[0],
-            end: vals[1],
-        })
-    }
+    start: u64,
+    end: u64,
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
@@ -46,23 +26,23 @@ impl Pair {
     }
 }
 
+fn assignment_parser(input: &str) -> IResult<&str, Assignment> {
+    let (input, (start, end)) = separated_pair(complete::u64, tag("-"), complete::u64)(input)?;
+    Ok((input, Assignment { start, end }))
+}
+
+fn pair_parser(input: &str) -> IResult<&str, Pair> {
+    let (input, (left, right)) =
+        separated_pair(assignment_parser, tag(","), assignment_parser)(input)?;
+    Ok((input, Pair { left, right }))
+}
+
 impl FromStr for Pair {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let vals = s
-            .trim()
-            .split(',')
-            .map(|v| v.parse())
-            .collect::<Result<Vec<_>, _>>()?;
-        if vals.len() != 2 {
-            bail!("Invalid pair: {}", s);
-        }
-
-        Ok(Self {
-            left: vals[0],
-            right: vals[1],
-        })
+        let (_, pair) = pair_parser(s).map_err(|e| e.to_owned())?;
+        Ok(pair)
     }
 }
 
