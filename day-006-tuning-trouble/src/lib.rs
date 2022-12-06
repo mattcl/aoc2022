@@ -18,7 +18,7 @@ impl TuningTrouble {
                 let cur = idx - i;
                 let v = self.message[cur];
                 if sum & v > 0 {
-                    // we know the new index to start from is cur + 1
+                    // we know the new index to use in the outer loop is cur + size
                     idx = cur + size;
                     continue 'outer;
                 }
