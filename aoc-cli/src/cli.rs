@@ -12,6 +12,7 @@ use clap_complete::{generate, shells::Zsh};
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
+use tuning_trouble::TuningTrouble;
 // import_marker
 
 // I'm not proud
@@ -148,5 +149,6 @@ generate_cli! {
     (RucksackReorganization, 3),
     (CampCleanup, 4),
     (SupplyStacks, 5),
+    (TuningTrouble, 6),
     // command_marker
 }

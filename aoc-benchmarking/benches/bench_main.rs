@@ -6,6 +6,7 @@ use camp_cleanup::CampCleanup;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
+use tuning_trouble::TuningTrouble;
 // import_marker
 
 criterion_main! {
@@ -46,6 +47,13 @@ aoc_benches! {
         day_005,
         "../day-005-supply-stacks/input.txt",
         SupplyStacks,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_006,
+        "../day-006-tuning-trouble/input.txt",
+        TuningTrouble,
         "Part 1",
         "Part 2"
     ),

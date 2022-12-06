@@ -25,6 +25,7 @@ dependencies = [
  "rock-paper-scissors",
  "rucksack-reorganization",
  "supply-stacks",
+ "tuning-trouble",
 ]
 
 [[package]]
@@ -42,6 +43,7 @@ dependencies = [
  "serde",
  "serde_json",
  "supply-stacks",
+ "tuning-trouble",
 ]
 
 [[package]]
@@ -691,6 +693,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
+
+[[package]]
 name = "rustix"
 version = "0.35.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -817,6 +825,18 @@ checksum = "be4d6b5f19ff7664e8c98d03e2139cb510db9b0a60b55f8e8709b689d939b6bc"
 dependencies = [
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "tuning-trouble"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]

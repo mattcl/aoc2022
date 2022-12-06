@@ -18,3 +18,4 @@ rock-paper-scissors = { path = "../day-002-rock-paper-scissors" }
 rucksack-reorganization = { path = "../day-003-rucksack-reorganization" }
 camp-cleanup = { path = "../day-004-camp-cleanup" }
 supply-stacks = { path = "../day-005-supply-stacks" }
+tuning-trouble = { path = "../day-006-tuning-trouble" }
