@@ -1,22 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::bail;
-use aoc_plumbing::Problem;
-
-#[inline]
-fn char_to_mask(ch: char) -> u64 {
-    let v = if ch.is_lowercase() {
-        ((ch as u8) - ('a' as u8)) as usize
-    } else {
-        ((ch as u8) - ('A' as u8) + 26) as usize
-    };
-    mask(v)
-}
-
-#[inline]
-fn mask(shift: usize) -> u64 {
-    1 << shift
-}
+use aoc_plumbing::{bits::char_to_mask, Problem};
 
 #[inline]
 fn priority_sum_from_bin(bin: u64) -> usize {

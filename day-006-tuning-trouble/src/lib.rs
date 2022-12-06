@@ -1,56 +1,35 @@
-use std::{collections::VecDeque, str::FromStr};
+use std::str::FromStr;
 
-use anyhow::anyhow;
-use aoc_plumbing::Problem;
-use rustc_hash::FxHashSet;
-
-#[derive(Debug, Clone, Default, Eq, PartialEq)]
-pub struct Window<const N: usize>(VecDeque<char>);
-
-impl<const N: usize> Window<N> {
-    pub fn unique(&self) -> bool {
-        FxHashSet::from_iter(self.0.iter().copied()).len() == N
-    }
-
-    pub fn insert(&mut self, ch: char) {
-        self.0.push_back(ch);
-
-        if self.0.len() > N {
-            self.0.pop_front();
-        }
-    }
-}
+use anyhow::bail;
+use aoc_plumbing::{bits::char_to_mask, Problem};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct TuningTrouble {
-    message: String,
+    message: Vec<u64>,
 }
 
 impl TuningTrouble {
-    pub fn first_marker(&self) -> Option<usize> {
-        let mut window = Window::<4>::default();
+    pub fn find_unique(&self, size: usize) -> Result<usize, anyhow::Error> {
+        let mut idx = size - 1;
+        'outer: while idx < self.message.len() {
+            let mut sum = self.message[idx];
 
-        for (idx, ch) in self.message.chars().enumerate() {
-            window.insert(ch);
-            if window.unique() {
-                return Some(idx + 1);
+            for i in 1..size {
+                let cur = idx - i;
+                let v = self.message[cur];
+                if sum & v > 0 {
+                    // we know the new index to start from is cur + 1
+                    idx = cur + size;
+                    continue 'outer;
+                }
+
+                sum |= v;
             }
+
+            return Ok(idx + 1);
         }
 
-        None
-    }
-
-    pub fn first_message(&self) -> Option<usize> {
-        let mut window = Window::<14>::default();
-
-        for (idx, ch) in self.message.chars().enumerate() {
-            window.insert(ch);
-            if window.unique() {
-                return Some(idx + 1);
-            }
-        }
-
-        None
+        bail!("None found");
     }
 }
 
@@ -58,7 +37,9 @@ impl FromStr for TuningTrouble {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self { message: s.into() })
+        Ok(Self {
+            message: s.chars().map(char_to_mask).collect(),
+        })
     }
 }
 
@@ -72,11 +53,11 @@ impl Problem for TuningTrouble {
     type P2 = usize;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        self.first_marker().ok_or_else(|| anyhow!("None found"))
+        self.find_unique(4)
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        self.first_message().ok_or_else(|| anyhow!("None found"))
+        self.find_unique(14)
     }
 }
 
