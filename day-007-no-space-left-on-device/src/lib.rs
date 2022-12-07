@@ -12,51 +12,36 @@ use nom::{
 };
 use rustc_hash::FxHashMap;
 
-#[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Output {
-    Cd { path: String },
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum History<'a> {
+    Cd { path: &'a str },
     Ls,
-    File { size: u64, name: String },
-    Dir { name: String },
+    File { size: u64, name: &'a str },
+    Dir { name: &'a str },
 }
 
-fn parse_cd(input: &str) -> IResult<&str, Output> {
+fn parse_cd<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
     let (input, name) = preceded(tag("$ cd "), rest)(input)?;
-    Ok((input, Output::Cd { path: name.into() }))
+    Ok((input, History::Cd { path: name }))
 }
 
-fn parse_ls(input: &str) -> IResult<&str, Output> {
+fn parse_ls<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
     let (input, _) = tag("$ ls")(input)?;
-    Ok((input, Output::Ls))
+    Ok((input, History::Ls))
 }
 
-fn parse_file(input: &str) -> IResult<&str, Output> {
+fn parse_file<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
     let (input, (size, name)) = separated_pair(complete::u64, tag(" "), rest)(input)?;
-    Ok((
-        input,
-        Output::File {
-            size,
-            name: name.into(),
-        },
-    ))
+    Ok((input, History::File { size, name }))
 }
 
-fn parse_dir(input: &str) -> IResult<&str, Output> {
+fn parse_dir<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
     let (input, name) = preceded(tag("dir "), rest)(input)?;
-    Ok((input, Output::Dir { name: name.into() }))
+    Ok((input, History::Dir { name }))
 }
 
-fn parse_output(input: &str) -> IResult<&str, Output> {
-    alt((parse_cd, parse_ls, parse_dir, parse_file))(input)
-}
-
-impl FromStr for Output {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, o) = parse_output(s).map_err(|e| e.to_owned())?;
-        Ok(o)
-    }
+fn parse_history<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+    alt((parse_ls, parse_cd, parse_dir, parse_file))(input)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -64,12 +49,10 @@ pub enum Inode {
     File {
         inode: usize,
         size: u64,
-        name: String,
         parent: usize,
     },
     Dir {
         inode: usize,
-        name: String,
         entries: Vec<usize>,
         parent: usize,
     },
@@ -108,7 +91,6 @@ impl Inode {
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NoSpaceLeftOnDevice {
-    inode_map: FxHashMap<PathBuf, usize>,
     inodes: Vec<Inode>,
 }
 
@@ -116,74 +98,73 @@ impl FromStr for NoSpaceLeftOnDevice {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut nslod = Self::default();
+        let mut filesystem = Self::default();
+        let mut inode_map: FxHashMap<PathBuf, usize> = FxHashMap::default();
 
-        nslod.inodes.push(Inode::Dir {
+        filesystem.inodes.push(Inode::Dir {
             inode: 0,
-            name: "/".into(),
             entries: Vec::default(),
             parent: 0,
         });
-        nslod.inode_map.insert("/".into(), 0);
+
+        inode_map.insert("/".into(), 0);
         let mut cur_path = PathBuf::from("/");
         let mut cur = 0;
 
-        for res in s.trim().lines().map(|l| Output::from_str(l.trim())) {
-            let out = res?;
+        for res in s.trim().lines().map(|l| parse_history(l.trim())) {
+            let (_, out) = res.map_err(|e| e.to_owned())?;
 
-            let next_inode = nslod.inodes.len();
+            let next_inode = filesystem.inodes.len();
             match out {
-                Output::File { size, name } => {
-                    cur_path.push(&name);
-                    nslod.inode_map.insert(cur_path.clone(), next_inode);
-                    nslod.inodes.push(Inode::File {
+                History::File { size, name } => {
+                    cur_path.push(name);
+                    inode_map.insert(cur_path.clone(), next_inode);
+                    filesystem.inodes.push(Inode::File {
                         inode: next_inode,
                         size,
-                        name,
-                        parent: nslod.inodes[cur].inode(),
+                        parent: filesystem.inodes[cur].inode(),
                     });
-                    match &mut nslod.inodes[cur] {
+                    match &mut filesystem.inodes[cur] {
                         Inode::Dir { entries, .. } => entries.push(next_inode),
                         _ => bail!("attempted to insert entry to a file"),
                     }
                     cur_path.pop();
                 }
-                Output::Dir { name } => {
+                History::Dir { name } => {
                     cur_path.push(&name);
-                    nslod.inode_map.insert(cur_path.clone(), next_inode);
-                    nslod.inodes.push(Inode::Dir {
+                    inode_map.insert(cur_path.clone(), next_inode);
+                    filesystem.inodes.push(Inode::Dir {
                         inode: next_inode,
-                        name,
                         entries: Vec::default(),
-                        parent: nslod.inodes[cur].inode(),
+                        parent: filesystem.inodes[cur].inode(),
                     });
-                    match &mut nslod.inodes[cur] {
+                    match &mut filesystem.inodes[cur] {
                         Inode::Dir { entries, .. } => entries.push(next_inode),
                         _ => bail!("attempted to insert entry to a file"),
                     }
                     cur_path.pop();
                 }
-                Output::Cd { path } => {
+                History::Cd { path } => {
                     if path == ".." {
-                        cur = nslod.inodes[cur].parent();
+                        cur = filesystem.inodes[cur].parent();
                         cur_path.pop();
                     } else if path == "/" {
                         cur = 0;
                         cur_path = PathBuf::from("/");
                     } else {
                         cur_path.push(path);
-                        cur = nslod.inodes[*nslod
-                            .inode_map
+                        let idx = *inode_map
                             .get(&cur_path)
-                            .ok_or_else(|| anyhow!("Unkonwn path: {:?}", &cur_path))?]
-                        .inode();
+                            .ok_or_else(|| anyhow!("Unkonwn path: {:?}", &cur_path))?;
+
+                        cur = filesystem.inodes[idx].inode();
                     }
                 }
-                Output::Ls => { /* what does this even do? */ }
+                History::Ls => { /* what does this even do? */ }
             }
         }
 
-        Ok(nslod)
+        Ok(filesystem)
     }
 }
 
@@ -198,17 +179,9 @@ impl Problem for NoSpaceLeftOnDevice {
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
         let mut cache = FxHashMap::default();
-        let sum = self
-            .inodes
-            .iter()
-            .filter_map(|i| match i {
-                Inode::Dir { .. } => Some(i.size(&self.inodes, &mut cache)),
-                _ => None,
-            })
-            .filter(|v| *v <= 100000)
-            .sum();
-
-        Ok(sum)
+        // warm the cache
+        self.inodes[0].size(&self.inodes, &mut cache);
+        Ok(cache.values().filter(|v| **v <= 100000).sum())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
