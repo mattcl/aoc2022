@@ -11,36 +11,53 @@ use nom::{
     IResult,
 };
 use rustc_hash::FxHashMap;
+use xxhash_rust::xxh3::xxh3_64;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub enum History<'a> {
-    Cd { path: &'a str },
+pub enum History {
+    Cd { path: u64 },
     Ls,
-    File { size: u64, name: &'a str },
-    Dir { name: &'a str },
+    File { size: u64, name: u64 },
+    Dir { name: u64 },
 }
 
-fn parse_cd<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+fn parse_cd(input: &str) -> IResult<&str, History> {
     let (input, name) = preceded(tag("$ cd "), rest)(input)?;
-    Ok((input, History::Cd { path: name }))
+    Ok((
+        input,
+        History::Cd {
+            path: xxh3_64(name.as_bytes()),
+        },
+    ))
 }
 
-fn parse_ls<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+fn parse_ls(input: &str) -> IResult<&str, History> {
     let (input, _) = tag("$ ls")(input)?;
     Ok((input, History::Ls))
 }
 
-fn parse_file<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+fn parse_file(input: &str) -> IResult<&str, History> {
     let (input, (size, name)) = separated_pair(complete::u64, tag(" "), rest)(input)?;
-    Ok((input, History::File { size, name }))
+    Ok((
+        input,
+        History::File {
+            size,
+            name: xxh3_64(name.as_bytes()),
+        },
+    ))
 }
 
-fn parse_dir<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+fn parse_dir(input: &str) -> IResult<&str, History> {
     let (input, name) = preceded(tag("dir "), rest)(input)?;
-    Ok((input, History::Dir { name }))
+    Ok((
+        input,
+        History::Dir {
+            name: xxh3_64(name.as_bytes()),
+        },
+    ))
 }
 
-fn parse_history<'a>(input: &'a str) -> IResult<&'a str, History<'a>> {
+fn parse_history(input: &str) -> IResult<&str, History> {
     alt((parse_ls, parse_cd, parse_dir, parse_file))(input)
 }
 
@@ -53,7 +70,7 @@ pub enum Inode {
     },
     Dir {
         inode: usize,
-        entries: FxHashMap<String, usize>,
+        entries: FxHashMap<u64, usize>,
         parent: usize,
     },
 }
@@ -73,20 +90,25 @@ impl Inode {
         }
     }
 
-    pub fn size(&self, inodes: &[Inode], cache: &mut FxHashMap<usize, u64>) -> u64 {
+    pub fn size(
+        &self,
+        inodes: &[Inode],
+        results: &mut Vec<u64>,
+        criteria: &impl Fn(u64) -> bool,
+    ) -> u64 {
         match self {
             Self::File { size, .. } => *size,
-            Self::Dir { inode, entries, .. } => {
-                if let Some(s) = cache.get(inode) {
-                    *s
-                } else {
-                    let s = entries
-                        .values()
-                        .map(|i| inodes[*i].size(inodes, cache))
-                        .sum();
-                    cache.insert(*inode, s);
-                    s
+            Self::Dir { entries, .. } => {
+                let s = entries
+                    .values()
+                    .map(|i| inodes[*i].size(inodes, results, criteria))
+                    .sum();
+
+                if criteria(s) {
+                    results.push(s);
                 }
+
+                s
             }
         }
     }
@@ -95,6 +117,7 @@ impl Inode {
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NoSpaceLeftOnDevice {
     inodes: Vec<Inode>,
+    total_size: u64,
 }
 
 impl FromStr for NoSpaceLeftOnDevice {
@@ -109,6 +132,9 @@ impl FromStr for NoSpaceLeftOnDevice {
             parent: 0,
         });
 
+        let up = xxh3_64("..".as_bytes());
+        let root = xxh3_64("/".as_bytes());
+
         let mut cur = 0;
 
         for res in s.trim().lines().map(|l| parse_history(l.trim())) {
@@ -122,8 +148,9 @@ impl FromStr for NoSpaceLeftOnDevice {
                         size,
                         parent: filesystem.inodes[cur].inode(),
                     });
+                    filesystem.total_size += size;
                     match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.insert(name.into(), next_inode),
+                        Inode::Dir { entries, .. } => entries.insert(name, next_inode),
                         _ => bail!("attempted to insert entry to a file"),
                     };
                 }
@@ -134,19 +161,19 @@ impl FromStr for NoSpaceLeftOnDevice {
                         parent: filesystem.inodes[cur].inode(),
                     });
                     match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.insert(name.into(), next_inode),
+                        Inode::Dir { entries, .. } => entries.insert(name, next_inode),
                         _ => bail!("attempted to insert entry to a file"),
                     };
                 }
                 History::Cd { path } => {
-                    if path == ".." {
+                    if path == up {
                         cur = filesystem.inodes[cur].parent();
-                    } else if path == "/" {
+                    } else if path == root {
                         cur = 0;
                     } else {
                         cur = match filesystem.inodes.get(cur) {
                             Some(Inode::Dir { entries, .. }) => {
-                                *entries.get(path).ok_or_else(|| {
+                                *entries.get(&path).ok_or_else(|| {
                                     anyhow!("Attempted to get missing path: {}", path)
                                 })?
                             }
@@ -172,23 +199,20 @@ impl Problem for NoSpaceLeftOnDevice {
     type P2 = u64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        let mut cache = FxHashMap::default();
-        // warm the cache
-        self.inodes[0].size(&self.inodes, &mut cache);
-        Ok(cache.values().filter(|v| **v <= 100000).sum())
+        let mut results = Vec::with_capacity(self.inodes.len());
+        self.inodes[0].size(&self.inodes, &mut results, &|v| v <= 100000);
+        Ok(results.iter().sum())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        let mut cache = FxHashMap::default();
+        let mut results = Vec::with_capacity(self.inodes.len());
         // warm the cache
-        let cur = 70000000 - self.inodes[0].size(&self.inodes, &mut cache);
-        let desired = 30000000 - cur;
+        let desired = 30000000 - (70000000 - self.total_size);
+        self.inodes[0].size(&self.inodes, &mut results, &|v| v >= desired);
 
-        cache
-            .values()
-            .filter(|v| **v >= desired)
+        results
+            .into_iter()
             .min()
-            .map(|v| *v)
             .ok_or_else(|| anyhow!("could not find directory"))
     }
 }
