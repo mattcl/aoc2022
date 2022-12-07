@@ -1,4 +1,4 @@
-use std::{path::PathBuf, str::FromStr};
+use std::str::FromStr;
 
 use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
@@ -53,7 +53,7 @@ pub enum Inode {
     },
     Dir {
         inode: usize,
-        entries: Vec<usize>,
+        entries: FxHashMap<String, usize>,
         parent: usize,
     },
 }
@@ -80,7 +80,10 @@ impl Inode {
                 if let Some(s) = cache.get(inode) {
                     *s
                 } else {
-                    let s = entries.iter().map(|i| inodes[*i].size(inodes, cache)).sum();
+                    let s = entries
+                        .values()
+                        .map(|i| inodes[*i].size(inodes, cache))
+                        .sum();
                     cache.insert(*inode, s);
                     s
                 }
@@ -99,16 +102,13 @@ impl FromStr for NoSpaceLeftOnDevice {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut filesystem = Self::default();
-        let mut inode_map: FxHashMap<PathBuf, usize> = FxHashMap::default();
 
         filesystem.inodes.push(Inode::Dir {
             inode: 0,
-            entries: Vec::default(),
+            entries: FxHashMap::default(),
             parent: 0,
         });
 
-        inode_map.insert("/".into(), 0);
-        let mut cur_path = PathBuf::from("/");
         let mut cur = 0;
 
         for res in s.trim().lines().map(|l| parse_history(l.trim())) {
@@ -117,47 +117,41 @@ impl FromStr for NoSpaceLeftOnDevice {
             let next_inode = filesystem.inodes.len();
             match out {
                 History::File { size, name } => {
-                    cur_path.push(name);
-                    inode_map.insert(cur_path.clone(), next_inode);
                     filesystem.inodes.push(Inode::File {
                         inode: next_inode,
                         size,
                         parent: filesystem.inodes[cur].inode(),
                     });
                     match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.push(next_inode),
+                        Inode::Dir { entries, .. } => entries.insert(name.into(), next_inode),
                         _ => bail!("attempted to insert entry to a file"),
-                    }
-                    cur_path.pop();
+                    };
                 }
                 History::Dir { name } => {
-                    cur_path.push(&name);
-                    inode_map.insert(cur_path.clone(), next_inode);
                     filesystem.inodes.push(Inode::Dir {
                         inode: next_inode,
-                        entries: Vec::default(),
+                        entries: FxHashMap::default(),
                         parent: filesystem.inodes[cur].inode(),
                     });
                     match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.push(next_inode),
+                        Inode::Dir { entries, .. } => entries.insert(name.into(), next_inode),
                         _ => bail!("attempted to insert entry to a file"),
-                    }
-                    cur_path.pop();
+                    };
                 }
                 History::Cd { path } => {
                     if path == ".." {
                         cur = filesystem.inodes[cur].parent();
-                        cur_path.pop();
                     } else if path == "/" {
                         cur = 0;
-                        cur_path = PathBuf::from("/");
                     } else {
-                        cur_path.push(path);
-                        let idx = *inode_map
-                            .get(&cur_path)
-                            .ok_or_else(|| anyhow!("Unkonwn path: {:?}", &cur_path))?;
-
-                        cur = filesystem.inodes[idx].inode();
+                        cur = match filesystem.inodes.get(cur) {
+                            Some(Inode::Dir { entries, .. }) => {
+                                *entries.get(path).ok_or_else(|| {
+                                    anyhow!("Attempted to get missing path: {}", path)
+                                })?
+                            }
+                            _ => bail!("attempted to search file for entries"),
+                        };
                     }
                 }
                 History::Ls => { /* what does this even do? */ }

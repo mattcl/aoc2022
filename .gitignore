@@ -1,2 +1,5 @@
 /target
 *.sw[a-z]
+perf.data
+perf.data.old
+*.svg
