@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use anyhow::{anyhow, bail};
+use anyhow::anyhow;
 use aoc_plumbing::Problem;
 use nom::{
     branch::alt,
@@ -17,7 +17,7 @@ use xxhash_rust::xxh3::xxh3_64;
 pub enum History {
     Cd { path: u64 },
     Ls,
-    File { size: u64, name: u64 },
+    File { size: u64 },
     Dir { name: u64 },
 }
 
@@ -37,14 +37,8 @@ fn parse_ls(input: &str) -> IResult<&str, History> {
 }
 
 fn parse_file(input: &str) -> IResult<&str, History> {
-    let (input, (size, name)) = separated_pair(complete::u64, tag(" "), rest)(input)?;
-    Ok((
-        input,
-        History::File {
-            size,
-            name: xxh3_64(name.as_bytes()),
-        },
-    ))
+    let (input, (size, _)) = separated_pair(complete::u64, tag(" "), rest)(input)?;
+    Ok((input, History::File { size }))
 }
 
 fn parse_dir(input: &str) -> IResult<&str, History> {
@@ -62,61 +56,46 @@ fn parse_history(input: &str) -> IResult<&str, History> {
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
-pub enum Inode {
-    File {
-        inode: usize,
-        size: u64,
-        parent: usize,
-    },
-    Dir {
-        inode: usize,
-        entries: FxHashMap<u64, usize>,
-        parent: usize,
-    },
+pub struct Directory {
+    inode: usize,
+    directories: FxHashMap<u64, usize>,
+    parent: usize,
+    filesize: u64,
 }
 
-impl Inode {
+impl Directory {
     pub fn parent(&self) -> usize {
-        match self {
-            Self::File { parent, .. } => *parent,
-            Self::Dir { parent, .. } => *parent,
-        }
+        self.parent
     }
 
     pub fn inode(&self) -> usize {
-        match self {
-            Self::File { inode, .. } => *inode,
-            Self::Dir { inode, .. } => *inode,
-        }
+        self.inode
     }
 
     pub fn size(
         &self,
-        inodes: &[Inode],
+        directories: &[Directory],
         results: &mut Vec<u64>,
         criteria: &impl Fn(u64) -> bool,
     ) -> u64 {
-        match self {
-            Self::File { size, .. } => *size,
-            Self::Dir { entries, .. } => {
-                let s = entries
-                    .values()
-                    .map(|i| inodes[*i].size(inodes, results, criteria))
-                    .sum();
+        let s = self.filesize
+            + self
+                .directories
+                .values()
+                .map(|i| directories[*i].size(directories, results, criteria))
+                .sum::<u64>();
 
-                if criteria(s) {
-                    results.push(s);
-                }
-
-                s
-            }
+        if criteria(s) {
+            results.push(s);
         }
+
+        s
     }
 }
 
 #[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct NoSpaceLeftOnDevice {
-    inodes: Vec<Inode>,
+    directories: Vec<Directory>,
     total_size: u64,
 }
 
@@ -126,10 +105,11 @@ impl FromStr for NoSpaceLeftOnDevice {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut filesystem = Self::default();
 
-        filesystem.inodes.push(Inode::Dir {
+        filesystem.directories.push(Directory {
             inode: 0,
-            entries: FxHashMap::default(),
+            directories: FxHashMap::default(),
             parent: 0,
+            filesize: 0,
         });
 
         let up = xxh3_64("..".as_bytes());
@@ -140,45 +120,35 @@ impl FromStr for NoSpaceLeftOnDevice {
         for res in s.trim().lines().map(|l| parse_history(l.trim())) {
             let (_, out) = res.map_err(|e| e.to_owned())?;
 
-            let next_inode = filesystem.inodes.len();
+            let next_inode = filesystem.directories.len();
             match out {
-                History::File { size, name } => {
-                    filesystem.inodes.push(Inode::File {
-                        inode: next_inode,
-                        size,
-                        parent: filesystem.inodes[cur].inode(),
-                    });
+                History::File { size } => {
                     filesystem.total_size += size;
-                    match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.insert(name, next_inode),
-                        _ => bail!("attempted to insert entry to a file"),
-                    };
+                    filesystem.directories[cur].filesize += size;
                 }
                 History::Dir { name } => {
-                    filesystem.inodes.push(Inode::Dir {
+                    filesystem.directories.push(Directory {
                         inode: next_inode,
-                        entries: FxHashMap::default(),
-                        parent: filesystem.inodes[cur].inode(),
+                        directories: FxHashMap::default(),
+                        parent: filesystem.directories[cur].inode(),
+                        filesize: 0,
                     });
-                    match &mut filesystem.inodes[cur] {
-                        Inode::Dir { entries, .. } => entries.insert(name, next_inode),
-                        _ => bail!("attempted to insert entry to a file"),
-                    };
+                    filesystem.directories[cur]
+                        .directories
+                        .insert(name, next_inode);
                 }
                 History::Cd { path } => {
                     if path == up {
-                        cur = filesystem.inodes[cur].parent();
+                        cur = filesystem.directories[cur].parent();
                     } else if path == root {
                         cur = 0;
                     } else {
-                        cur = match filesystem.inodes.get(cur) {
-                            Some(Inode::Dir { entries, .. }) => {
-                                *entries.get(&path).ok_or_else(|| {
-                                    anyhow!("Attempted to get missing path: {}", path)
-                                })?
-                            }
-                            _ => bail!("attempted to search file for entries"),
-                        };
+                        cur = *filesystem.directories[cur]
+                            .directories
+                            .get(&path)
+                            .ok_or_else(|| {
+                                anyhow!("Attempting to get unknown directory: {}", path)
+                            })?;
                     }
                 }
                 History::Ls => { /* what does this even do? */ }
@@ -199,16 +169,15 @@ impl Problem for NoSpaceLeftOnDevice {
     type P2 = u64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        let mut results = Vec::with_capacity(self.inodes.len());
-        self.inodes[0].size(&self.inodes, &mut results, &|v| v <= 100000);
+        let mut results = Vec::with_capacity(self.directories.len());
+        self.directories[0].size(&self.directories, &mut results, &|v| v <= 100000);
         Ok(results.iter().sum())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        let mut results = Vec::with_capacity(self.inodes.len());
-        // warm the cache
+        let mut results = Vec::with_capacity(self.directories.len());
         let desired = 30000000 - (70000000 - self.total_size);
-        self.inodes[0].size(&self.inodes, &mut results, &|v| v >= desired);
+        self.directories[0].size(&self.directories, &mut results, &|v| v >= desired);
 
         results
             .into_iter()
