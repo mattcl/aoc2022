@@ -3,6 +3,7 @@ use criterion::criterion_main;
 use aoc_benchmarking::aoc_benches;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
+use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
@@ -54,6 +55,13 @@ aoc_benches! {
         day_006,
         "../day-006-tuning-trouble/input.txt",
         TuningTrouble,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_007,
+        "../day-007-no-space-left-on-device/input.txt",
+        NoSpaceLeftOnDevice,
         "Part 1",
         "Part 2"
     ),

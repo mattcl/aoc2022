@@ -9,6 +9,7 @@ use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
+use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
@@ -150,5 +151,6 @@ generate_cli! {
     (CampCleanup, 4),
     (SupplyStacks, 5),
     (TuningTrouble, 6),
+    (NoSpaceLeftOnDevice, 7),
     // command_marker
 }

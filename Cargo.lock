@@ -22,6 +22,7 @@ dependencies = [
  "calorie-counting",
  "camp-cleanup",
  "criterion",
+ "no-space-left-on-device",
  "rock-paper-scissors",
  "rucksack-reorganization",
  "supply-stacks",
@@ -38,6 +39,7 @@ dependencies = [
  "camp-cleanup",
  "clap 4.0.26",
  "clap_complete",
+ "no-space-left-on-device",
  "rock-paper-scissors",
  "rucksack-reorganization",
  "serde",
@@ -451,6 +453,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
 
 [[package]]
+name = "no-space-left-on-device"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "itertools",
+ "nom",
+ "rayon",
+ "rustc-hash",
+ "serde",
+]
+
+[[package]]
 name = "nom"
 version = "7.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -691,6 +707,12 @@ dependencies = [
  "aoc_helpers",
  "serde",
 ]
+
+[[package]]
+name = "rustc-hash"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08d43f7aa6b08d49f382cde6a7982047c3426db949b1424bc4b7ec9ae12c6ce2"
 
 [[package]]
 name = "rustix"
