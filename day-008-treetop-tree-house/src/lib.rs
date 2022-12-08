@@ -19,79 +19,109 @@ impl VisualRange {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default, Eq, PartialEq)]
 pub struct TreetopTreeHouse {
     grid: Vec<Vec<u8>>,
+    // this ends up being roughly 4x the memory of storing the digits alone
+    // because 16 digits could have fit in the u128, and we store 10 u128s per
+    // row and 10 per col
+    row_maps: Vec<Vec<u128>>,
+    col_maps: Vec<Vec<u128>>,
     max_score: usize,
     width: usize,
     height: usize,
 }
 
 impl TreetopTreeHouse {
-    fn compute_range(&self, row: usize, col: usize) -> VisualRange {
+    /// Make a VisualRange for the given row/col.
+    ///
+    /// This solution came to me in a dream. There's a saner solution that
+    /// lanjian pointed out that uses monotonic stacks, but I think this is
+    /// faster and I actually understand this one.
+    ///
+    /// Recall that we have row_maps and col maps, which store an entry per row
+    /// (or col), where each entry stores a mapping of height -> u128, where the
+    /// 1's in the binary representation correspond to the locations of trees in
+    /// that row or column that are either equal to or greater than the given
+    /// height.
+    ///
+    /// Knowing this, and knowing our current row and column, we can fetch our
+    /// height from the grid, fetch the appropriate row map and the appropriate
+    /// column map, and using those values, calculate if we can see the edge and
+    /// how far we can see in each direction without additional memory lookups
+    /// or implicit looping.
+    ///
+    /// The theory here is that we can make a single left or right shift, then a
+    /// call to `leading_zeros` or `trailing_zeros` to determine the distance to
+    /// the nearest tree that would be greater than or equal to us. Most
+    /// processor architectures have special instructions for trailing zeros,
+    /// which will make that faster than if we were looping.
+    fn compute_bin_range(&self, row: usize, col: usize) -> VisualRange {
+        let extra_row_bits = 128 - self.height;
+        let extra_col_bits = 128 - self.width;
         let mut vr = VisualRange::default();
 
         if row > self.height || col > self.width {
             return vr;
         }
 
-        // these are the max values
-        let mut left = col;
-        let mut right = self.width - col - 1;
-        let mut up = row;
-        let mut down = self.height - row - 1;
+        let digit = self.grid[row][col];
 
-        let height = self.grid[row][col];
-
-        // down
-        for r in (row + 1)..self.height {
-            if self.grid[r][col] >= height {
-                down = r - row;
-                break;
-            }
-
-            if r == self.height - 1 {
-                vr.seen_edge = true;
-            }
+        if digit == 0 {
+            vr.score = 4;
+            return vr;
         }
 
-        // up
-        for r in 1..=row {
-            if self.grid[row - r][col] >= height {
-                up = r;
-                break;
-            }
+        // grab this digit's map
+        let row_map = self.row_maps[row][(digit - 1) as usize];
 
-            if r == row {
-                vr.seen_edge = true;
-            }
+        // we want to shift by the current col + 1, which should leave us a
+        // number representing the view to the _right_ (map is reversed)
+        let shifted = row_map >> (col + 1);
+        if shifted == 0 {
+            // we can see the right edge
+            vr.seen_edge = true;
+            vr.score = self.width - col - 1;
+        } else {
+            // otherwise we know the number of zeros is how far we could see - 1
+            vr.score = shifted.trailing_zeros() as usize + 1;
         }
 
-        // right
-        for c in (col + 1)..self.width {
-            if self.grid[row][c] >= height {
-                right = c - col;
-                break;
-            }
-
-            if c == self.width - 1 {
-                vr.seen_edge = true;
-            }
+        // we now want to know if we can see the edge to the _left_, which is
+        // trickier because we're going to be shifting left
+        let shifted = row_map << (self.width - col + extra_col_bits);
+        if shifted == 0 {
+            // we can see the left edge
+            vr.seen_edge = true;
+            vr.score *= col;
+        } else {
+            vr.score *= shifted.leading_zeros() as usize + 1;
         }
 
-        //  left
-        for c in 1..=col {
-            if self.grid[row][col - c] >= height {
-                left = c;
-                break;
-            }
+        // now we do the same for the columns
+        let col_map = self.col_maps[col][(digit - 1) as usize];
 
-            if c == col {
-                vr.seen_edge = true;
-            }
+        // we want to shift by the current row + 1, which should leave us a
+        // number representing the view _down_ (map is reversed)
+        let shifted = col_map >> (row + 1);
+        if shifted == 0 {
+            // we can see the right edge
+            vr.seen_edge = true;
+            vr.score *= self.height - row - 1;
+        } else {
+            // otherwise we know the number of zeros is how far we could see - 1
+            vr.score *= shifted.trailing_zeros() as usize + 1;
         }
 
-        vr.score = left * right * up * down;
+        // and, lastly, back up
+        let shifted = col_map << (self.height - row + extra_row_bits);
+        if shifted == 0 {
+            // we can see the left edge
+            vr.seen_edge = true;
+            vr.score *= row;
+        } else {
+            vr.score *= shifted.leading_zeros() as usize + 1;
+        }
 
         vr
     }
@@ -101,19 +131,65 @@ impl FromStr for TreetopTreeHouse {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut grid = Vec::default();
+        let dim = s.lines().count();
+        if dim > 128 {
+            bail!("Sorry, can only handle grids of at most 128x128");
+        }
+        let mut grid = Vec::with_capacity(dim);
 
-        for line in s.trim().lines() {
-            grid.push(
-                line.trim()
-                    .chars()
-                    .map(|ch| {
-                        ch.to_digit(10)
-                            .map(|v| v as u8)
-                            .ok_or_else(|| anyhow!("Invalid char: {}", ch))
-                    })
-                    .collect::<Result<Vec<_>, _>>()?,
-            );
+        // so we're not going to allocate for the 0, because those can NEVER be
+        // seen unless on the edge and they always have a score of at most 4
+        let mut row_maps = vec![vec![0u128; 9]; dim];
+        let mut col_maps = vec![vec![0u128; 9]; dim];
+
+        let mut row_mask = 1u128;
+        for (row, line) in s.trim().lines().enumerate() {
+            let mut new_row = Vec::with_capacity(dim);
+            let mut col_mask = 1u128;
+            for (col, ch) in line.trim().chars().enumerate() {
+                let digit =
+                    ch.to_digit(10)
+                        .ok_or_else(|| anyhow!("Invalid digit: {}", ch))? as u8;
+                new_row.push(digit);
+                if digit > 0 {
+                    // confusing naming, I realize, but the col mask is which
+                    // bit in the integer for the row this digit corresponds to
+                    row_maps[row][(digit - 1) as usize] |= col_mask;
+                    col_maps[col][(digit - 1) as usize] |= row_mask;
+                }
+                col_mask <<= 1;
+            }
+
+            grid.push(new_row);
+
+            row_mask <<= 1;
+        }
+
+        // We're going to make each row's digit's map represent all the locations
+        // where there's another digit that's either equal to or larger than it
+        // In essence, starting from a particular bit position and looking to
+        // the left would be the trees equal or larger to you to the right (or
+        // down) and looking to the bits to the right would be the trees equal
+        // or larger to the left (or up). This should allow us to take advantage
+        // of not having to fetch from system memory, as we can probably hold
+        // two u128 bit values in the processor cache.
+        //
+        // Additionally, we can make a single left or right shift, then a call
+        // to leading or trailing zeros to determine the distance to the nearest
+        // tree that would be greater than or equal to us. Most processors have
+        // special instructions for trailing zeros, which will make that VERY
+        // fast.
+        for row in 0..row_maps.len() {
+            for digit in (0..8).rev() {
+                row_maps[row][digit] |= row_maps[row][digit + 1];
+            }
+        }
+
+        // and the same for columns
+        for col in 0..col_maps.len() {
+            for digit in (0..8).rev() {
+                col_maps[col][digit] |= col_maps[col][digit + 1];
+            }
         }
 
         let height = grid.len();
@@ -128,6 +204,8 @@ impl FromStr for TreetopTreeHouse {
             width,
             height,
             max_score: 0,
+            row_maps,
+            col_maps,
         })
     }
 }
@@ -148,7 +226,7 @@ impl Problem for TreetopTreeHouse {
 
         for row in 1..(self.height - 1) {
             for col in 1..(self.width - 1) {
-                let vr = self.compute_range(row, col);
+                let vr = self.compute_bin_range(row, col);
                 if vr.seen_edge {
                     visible += 1;
                 }
