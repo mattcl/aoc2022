@@ -7,6 +7,7 @@ use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
+use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
 // import_marker
 
@@ -62,6 +63,13 @@ aoc_benches! {
         day_007,
         "../day-007-no-space-left-on-device/input.txt",
         NoSpaceLeftOnDevice,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_008,
+        "../day-008-treetop-tree-house/input.txt",
+        TreetopTreeHouse,
         "Part 1",
         "Part 2"
     ),

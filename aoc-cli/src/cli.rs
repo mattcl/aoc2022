@@ -13,6 +13,7 @@ use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
+use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
 // import_marker
 
@@ -152,5 +153,6 @@ generate_cli! {
     (SupplyStacks, 5),
     (TuningTrouble, 6),
     (NoSpaceLeftOnDevice, 7),
+    (TreetopTreeHouse, 8),
     // command_marker
 }
