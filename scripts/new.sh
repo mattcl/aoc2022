@@ -54,3 +54,11 @@ BENCH_REPLACEMENT="${BENCH_REPLACEMENT//\//\\/}"
 BENCH_REPLACEMENT="${BENCH_REPLACEMENT//&/\\&}"
 BENCH_REPLACEMENT="${BENCH_REPLACEMENT//$'\n'/\\n}"
 sed -i "s#// bench_marker#$BENCH_REPLACEMENT#" aoc-benchmarking/benches/bench_main.rs
+
+# ====== export
+echo "Appending $EXPECTED to export library"
+echo "$EXPECTED = { path = \"../$DESIRED\" }" >> aoc/Cargo.toml
+
+echo "Modifying export lib.rs"
+IMPORT_REPLACEMENT="pub use ${CRATE_NAME}::${STRUCT_NAME};\\n// import_marker"
+sed -i "s#// import_marker#$IMPORT_REPLACEMENT#" aoc/src/lib.rs

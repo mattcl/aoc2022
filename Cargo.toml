@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "aoc",
     "aoc-benchmarking",
     "aoc-cli",
     "aoc-plumbing",
