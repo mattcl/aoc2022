@@ -2,37 +2,27 @@ use std::str::FromStr;
 
 use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
-use rayon::prelude::*;
-use rustc_hash::FxHashSet;
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub struct VisualRange {
-    left: usize,
-    right: usize,
-    up: usize,
-    down: usize,
+    score: usize,
+    seen_edge: bool,
 }
 
 impl VisualRange {
     pub fn score(&self) -> usize {
-        self.left * self.right * self.up * self.down
+        self.score
     }
-}
 
-impl Default for VisualRange {
-    fn default() -> Self {
-        Self {
-            left: 1,
-            right: 1,
-            up: 1,
-            down: 1,
-        }
+    pub fn can_see_edge(&self) -> bool {
+        self.seen_edge
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct TreetopTreeHouse {
     grid: Vec<Vec<u8>>,
+    max_score: usize,
     width: usize,
     height: usize,
 }
@@ -45,47 +35,63 @@ impl TreetopTreeHouse {
             return vr;
         }
 
+        // these are the max values
+        let mut left = col;
+        let mut right = self.width - col - 1;
+        let mut up = row;
+        let mut down = self.height - row - 1;
+
         let height = self.grid[row][col];
 
         // down
-        let mut working = 0;
         for r in (row + 1)..self.height {
-            working += 1;
             if self.grid[r][col] >= height {
+                down = r - row;
                 break;
             }
+
+            if r == self.height - 1 {
+                vr.seen_edge = true;
+            }
         }
-        vr.down *= working;
 
         // up
-        working = 0;
         for r in 1..=row {
-            working += 1;
             if self.grid[row - r][col] >= height {
+                up = r;
                 break;
             }
+
+            if r == row {
+                vr.seen_edge = true;
+            }
         }
-        vr.up *= working;
 
         // right
-        working = 0;
         for c in (col + 1)..self.width {
-            working += 1;
             if self.grid[row][c] >= height {
+                right = c - col;
                 break;
             }
+
+            if c == self.width - 1 {
+                vr.seen_edge = true;
+            }
         }
-        vr.right *= working;
 
         //  left
-        working = 0;
         for c in 1..=col {
-            working += 1;
             if self.grid[row][col - c] >= height {
+                left = c;
                 break;
             }
+
+            if c == col {
+                vr.seen_edge = true;
+            }
         }
-        vr.left *= working;
+
+        vr.score = left * right * up * down;
 
         vr
     }
@@ -121,6 +127,7 @@ impl FromStr for TreetopTreeHouse {
             grid,
             width,
             height,
+            max_score: 0,
         })
     }
 }
@@ -134,83 +141,31 @@ impl Problem for TreetopTreeHouse {
     type P1 = usize;
     type P2 = usize;
 
+    // see the comment for part two about why this is a combined day
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        // we can look _in_ from the edges
-        let mut seen: FxHashSet<usize> = FxHashSet::default();
+        // initial count is everytihng on the edge
+        let mut visible = self.width * 2 + self.height * 2 - 4;
 
         for row in 1..(self.height - 1) {
-            let left_edge = self.grid[row][0];
-            let right_edge = self.grid[row][self.width - 1];
-            let mut last_insert_col = 0;
-            // look right
-            let mut largest_seen = left_edge;
             for col in 1..(self.width - 1) {
-                let idx = row * 10000 + col;
-                if self.grid[row][col] > largest_seen {
-                    largest_seen = self.grid[row][col];
-                    seen.insert(idx);
-                    last_insert_col = col;
+                let vr = self.compute_range(row, col);
+                if vr.seen_edge {
+                    visible += 1;
                 }
-            }
-
-            // look left
-            let mut largest_seen = right_edge;
-            for col in ((last_insert_col + 1)..(self.width - 1)).rev() {
-                let idx = row * 10000 + col;
-
-                if self.grid[row][col] > largest_seen {
-                    largest_seen = self.grid[row][col];
-                    seen.insert(idx);
+                if vr.score > self.max_score {
+                    self.max_score = vr.score;
                 }
             }
         }
 
-        for col in 1..(self.width - 1) {
-            let top_edge = self.grid[0][col];
-            let bot_edge = self.grid[self.height - 1][col];
-            let mut last_insert_row = 0;
-            // look down
-            let mut largest_seen = top_edge;
-            for row in 1..(self.height - 1) {
-                let idx = row * 10000 + col;
-
-                if self.grid[row][col] > largest_seen {
-                    largest_seen = self.grid[row][col];
-                    seen.insert(idx);
-                    last_insert_row = row;
-                }
-            }
-
-            // look up
-            let mut largest_seen = bot_edge;
-            for row in ((last_insert_row + 1)..(self.height - 1)).rev() {
-                let idx = row * 10000 + col;
-
-                if self.grid[row][col] > largest_seen {
-                    largest_seen = self.grid[row][col];
-                    seen.insert(idx);
-                }
-            }
-        }
-
-        // we know that the number of trees around the edge, which are visible
-        // by default, is 2x the width + 2x the height minus 4 for the corners
-        // which were each counted twice.
-        Ok(seen.len() + self.width * 2 + self.height * 2 - 4)
+        Ok(visible)
     }
 
+    // Part 1 _could_ be O(n^2), The best part 2 could be is probably also
+    // O(n^2), but my implementation is O(n^3). Instead of 2 x O(n^2), or worse,
+    // O(n^2) + O(n^3), let's just solve both in one pass
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        // because we don't count edge cells, we know the minimum max is 4,
-        // given a uniform grid of the same number
-        (1..(self.height - 1))
-            .into_par_iter()
-            .filter_map(|row| {
-                (1..(self.width - 1))
-                    .map(|col| self.compute_range(row, col).score())
-                    .max()
-            })
-            .max()
-            .ok_or_else(|| anyhow!("Could not find max value"))
+        Ok(self.max_score)
     }
 }
 

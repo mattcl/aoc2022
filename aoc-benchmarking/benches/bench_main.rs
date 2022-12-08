@@ -70,8 +70,7 @@ aoc_benches! {
         day_008,
         "../day-008-treetop-tree-house/input.txt",
         TreetopTreeHouse,
-        "Part 1",
-        "Part 2"
+        "Combined because of parts being linked (includes parsing)"
     ),
     // bench_marker
 }
