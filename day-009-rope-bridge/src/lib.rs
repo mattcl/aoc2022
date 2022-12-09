@@ -91,22 +91,20 @@ impl<const N: usize> Rope<N> {
         }
 
         'outer: loop {
-            let mut all_touching = true;
             for cur in 1..N {
                 let prev = cur - 1;
 
                 if !self.knots[cur].touching(&self.knots[prev]) {
                     self.knots[cur].y += (self.knots[prev].y - self.knots[cur].y).signum();
                     self.knots[cur].x += (self.knots[prev].x - self.knots[cur].x).signum();
-                    all_touching = false;
+                } else if cur == 1 {
+                    break 'outer;
+                } else {
+                    continue;
                 }
 
                 if cur == N - 1 {
                     visited.insert(self.knots[cur]);
-                }
-
-                if all_touching {
-                    break 'outer;
                 }
             }
         }
@@ -196,5 +194,15 @@ mod tests {
             ";
         let solution = RopeBridge::solve(input).unwrap();
         assert_eq!(solution, Solution::new(88, 36));
+    }
+
+    #[test]
+    fn other() {
+        let input = "
+            R 2
+            L 4
+            ";
+        let solution = RopeBridge::solve(input).unwrap();
+        assert_eq!(solution, Solution::new(3, 1));
     }
 }
