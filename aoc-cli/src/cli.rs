@@ -11,6 +11,7 @@ use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
+use rope_bridge::RopeBridge;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
@@ -154,5 +155,6 @@ generate_cli! {
     (TuningTrouble, 6),
     (NoSpaceLeftOnDevice, 7),
     (TreetopTreeHouse, 8),
+    (RopeBridge, 9),
     // command_marker
 }

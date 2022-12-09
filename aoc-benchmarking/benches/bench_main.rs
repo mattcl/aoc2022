@@ -5,6 +5,7 @@ use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
+use rope_bridge::RopeBridge;
 use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
@@ -71,6 +72,13 @@ aoc_benches! {
         "../day-008-treetop-tree-house/input.txt",
         TreetopTreeHouse,
         "Combined because of parts being linked (includes parsing)"
+    ),
+    (
+        day_009,
+        "../day-009-rope-bridge/input.txt",
+        RopeBridge,
+        "Part 1",
+        "Part 2"
     ),
     // bench_marker
 }

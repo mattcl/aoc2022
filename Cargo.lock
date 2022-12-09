@@ -23,6 +23,7 @@ dependencies = [
  "camp-cleanup",
  "no-space-left-on-device",
  "rock-paper-scissors",
+ "rope-bridge",
  "rucksack-reorganization",
  "supply-stacks",
  "treetop-tree-house",
@@ -39,6 +40,7 @@ dependencies = [
  "criterion",
  "no-space-left-on-device",
  "rock-paper-scissors",
+ "rope-bridge",
  "rucksack-reorganization",
  "supply-stacks",
  "treetop-tree-house",
@@ -57,6 +59,7 @@ dependencies = [
  "clap_complete",
  "no-space-left-on-device",
  "rock-paper-scissors",
+ "rope-bridge",
  "rucksack-reorganization",
  "serde",
  "serde_json",
@@ -711,6 +714,18 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "aoc_helpers",
+ "serde",
+]
+
+[[package]]
+name = "rope-bridge"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
  "serde",
 ]
 

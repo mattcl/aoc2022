@@ -21,3 +21,4 @@ supply-stacks = { path = "../day-005-supply-stacks" }
 tuning-trouble = { path = "../day-006-tuning-trouble" }
 no-space-left-on-device = { path = "../day-007-no-space-left-on-device" }
 treetop-tree-house = { path = "../day-008-treetop-tree-house" }
+rope-bridge = { path = "../day-009-rope-bridge" }
