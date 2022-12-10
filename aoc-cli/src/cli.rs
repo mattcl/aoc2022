@@ -7,6 +7,7 @@ use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
+use cathode_ray_tube::CathodeRayTube;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use no_space_left_on_device::NoSpaceLeftOnDevice;
@@ -156,5 +157,6 @@ generate_cli! {
     (NoSpaceLeftOnDevice, 7),
     (TreetopTreeHouse, 8),
     (RopeBridge, 9),
+    (CathodeRayTube, 10),
     // command_marker
 }

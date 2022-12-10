@@ -3,6 +3,7 @@ use criterion::criterion_main;
 use aoc_benchmarking::aoc_benches;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
+use cathode_ray_tube::CathodeRayTube;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
 use rope_bridge::RopeBridge;
@@ -77,6 +78,13 @@ aoc_benches! {
         day_009,
         "../day-009-rope-bridge/input.txt",
         RopeBridge,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_010,
+        "../day-010-cathode-ray-tube/input.txt",
+        CathodeRayTube,
         "Part 1",
         "Part 2"
     ),

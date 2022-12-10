@@ -21,6 +21,7 @@ dependencies = [
  "aoc-plumbing",
  "calorie-counting",
  "camp-cleanup",
+ "cathode-ray-tube",
  "no-space-left-on-device",
  "rock-paper-scissors",
  "rope-bridge",
@@ -37,6 +38,7 @@ dependencies = [
  "aoc-plumbing",
  "calorie-counting",
  "camp-cleanup",
+ "cathode-ray-tube",
  "criterion",
  "no-space-left-on-device",
  "rock-paper-scissors",
@@ -55,6 +57,7 @@ dependencies = [
  "aoc-plumbing",
  "calorie-counting",
  "camp-cleanup",
+ "cathode-ray-tube",
  "clap 4.0.26",
  "clap_complete",
  "no-space-left-on-device",
@@ -143,6 +146,18 @@ name = "cast"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37b2a672a2cb129a2e41c10b1224bb368f9f37a2b16b612598138befd7b37eb5"
+
+[[package]]
+name = "cathode-ray-tube"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "itertools",
+ "nom",
+ "serde",
+]
 
 [[package]]
 name = "cc"
