@@ -48,19 +48,6 @@ pub fn parse_opcodes(input: &str) -> IResult<&str, Vec<Opcode>> {
     many1(preceded(multispace0, parse_opcode))(input)
 }
 
-#[derive(Debug, Clone, Copy, Eq, PartialEq)]
-pub struct Op {
-    opcode: Opcode,
-    cycles_remaining: usize,
-}
-
-impl Op {
-    pub fn check(&mut self) -> bool {
-        self.cycles_remaining -= 1;
-        self.cycles_remaining == 0
-    }
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct CathodeRayTube {
     operations: Vec<Opcode>,
