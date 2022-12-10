@@ -2,7 +2,7 @@ use std::{hash::Hash, str::FromStr};
 
 use anyhow::bail;
 use aoc_plumbing::Problem;
-use nom::{sequence::separated_pair, IResult};
+use nom::{sequence::{separated_pair, preceded}, IResult, combinator::map_res, multi::many1, character::complete::multispace0};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
@@ -42,22 +42,10 @@ impl Motion {
     }
 }
 
-fn parse_motion(input: &str) -> IResult<&str, (char, i64)> {
-    let (input, (ch, val)) = separated_pair(
-        nom::character::complete::anychar,
-        nom::character::complete::multispace1,
-        nom::character::complete::i64,
-    )(input)?;
+impl TryFrom<(char, i64)> for Motion {
+    type Error = anyhow::Error;
 
-    Ok((input, (ch, val)))
-}
-
-impl FromStr for Motion {
-    type Err = anyhow::Error;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, (ch, val)) = parse_motion(s).map_err(|e| e.to_owned())?;
-
+    fn try_from((ch, val): (char, i64)) -> Result<Self, Self::Error> {
         match ch {
             'U' => Ok(Self::Up(val)),
             'D' => Ok(Self::Down(val)),
@@ -66,6 +54,21 @@ impl FromStr for Motion {
             _ => bail!("Invalid direction: {}", ch),
         }
     }
+}
+
+fn parse_motion(input: &str) -> IResult<&str, Motion> {
+    map_res(
+        separated_pair(
+            nom::character::complete::anychar,
+            nom::character::complete::multispace1,
+            nom::character::complete::i64,
+        ),
+        Motion::try_from
+    )(input)
+}
+
+fn parse_motions(input: &str) -> IResult<&str, Vec<Motion>> {
+    many1(preceded(multispace0, parse_motion))(input)
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -120,11 +123,7 @@ impl FromStr for RopeBridge {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let motions = s
-            .trim()
-            .lines()
-            .map(|l| Motion::from_str(l.trim()))
-            .collect::<Result<Vec<_>, _>>()?;
+        let (_, motions) = parse_motions(s).map_err(|e| e.to_owned())?;
 
         Ok(Self { motions })
     }
