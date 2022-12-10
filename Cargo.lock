@@ -154,7 +154,6 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "aoc_helpers",
- "itertools",
  "nom",
  "serde",
 ]

@@ -1,7 +1,6 @@
 use std::str::FromStr;
 
 use aoc_plumbing::Problem;
-use itertools::{join, Itertools};
 use nom::{branch::alt, bytes::complete::tag, sequence::preceded, IResult};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
@@ -111,15 +110,22 @@ impl Problem for CathodeRayTube {
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        let mut pixels = ['.'; 40 * 6];
+        let mut pixels = String::with_capacity(240 + 6);
         let mut program_counter = 0;
         let mut op = self.operations[0];
         let mut register = 1_i64;
 
         for pixel in 0..240_i64 {
+            if pixel % 40 == 0 {
+                // this results in a leading newline, which I actually want
+                // because of the way I print the output with a leading 'part 2:'
+                pixels.push('\n');
+            }
             let pos = pixel % 40;
             if (register - pos).abs() <= 1 {
-                pixels[pixel as usize] = '#';
+                pixels.push('#');
+            } else {
+                pixels.push('.');
             }
 
             if op.done() {
@@ -134,8 +140,7 @@ impl Problem for CathodeRayTube {
             }
         }
 
-        let out = String::from("\n") + &pixels.chunks(40).map(|line| join(line, "")).join("\n");
-        Ok(out)
+        Ok(pixels)
     }
 }
 

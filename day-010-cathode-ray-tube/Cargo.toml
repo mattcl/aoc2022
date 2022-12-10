@@ -11,7 +11,7 @@ description = "cathode ray tube"
 aoc_helpers = { workspace = true }
 aoc-plumbing = { path = "../aoc-plumbing" }
 anyhow = { workspace = true }
-itertools = { workspace = true }
+# itertools = { workspace = true }
 nom = { workspace = true }
 # rayon = { workspace = true }
 # rustc-hash = { workspace = true }
