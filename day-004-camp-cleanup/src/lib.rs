@@ -1,7 +1,13 @@
 use std::str::FromStr;
 
 use aoc_plumbing::Problem;
-use nom::{bytes::complete::tag, character::complete, sequence::separated_pair, IResult};
+use nom::{
+    bytes::complete::tag,
+    character::complete::{self, multispace0},
+    multi::many1,
+    sequence::{preceded, separated_pair},
+    IResult,
+};
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Assignment {
@@ -37,6 +43,10 @@ fn pair_parser(input: &str) -> IResult<&str, Pair> {
     Ok((input, Pair { left, right }))
 }
 
+fn pairs_parser(input: &str) -> IResult<&str, Vec<Pair>> {
+    many1(preceded(multispace0, pair_parser))(input)
+}
+
 impl FromStr for Pair {
     type Err = anyhow::Error;
 
@@ -55,11 +65,7 @@ impl FromStr for CampCleanup {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let assignments = s
-            .trim()
-            .lines()
-            .map(|v| v.parse())
-            .collect::<Result<Vec<_>, _>>()?;
+        let (_, assignments) = pairs_parser(s).map_err(|e| e.to_owned())?;
         Ok(Self { assignments })
     }
 }

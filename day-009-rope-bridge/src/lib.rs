@@ -2,7 +2,13 @@ use std::{hash::Hash, str::FromStr};
 
 use anyhow::bail;
 use aoc_plumbing::Problem;
-use nom::{sequence::{separated_pair, preceded}, IResult, combinator::map_res, multi::many1, character::complete::multispace0};
+use nom::{
+    character::complete::multispace0,
+    combinator::map_res,
+    multi::many1,
+    sequence::{preceded, separated_pair},
+    IResult,
+};
 use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
@@ -63,7 +69,7 @@ fn parse_motion(input: &str) -> IResult<&str, Motion> {
             nom::character::complete::multispace1,
             nom::character::complete::i64,
         ),
-        Motion::try_from
+        Motion::try_from,
     )(input)
 }
 
