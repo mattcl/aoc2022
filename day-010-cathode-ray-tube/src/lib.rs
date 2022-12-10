@@ -1,7 +1,10 @@
 use std::str::FromStr;
 
 use aoc_plumbing::Problem;
-use nom::{branch::alt, bytes::complete::tag, sequence::preceded, IResult};
+use nom::{
+    branch::alt, bytes::complete::tag, character::complete::multispace0, multi::many1,
+    sequence::preceded, IResult,
+};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Opcode {
@@ -41,6 +44,10 @@ pub fn parse_opcode(input: &str) -> IResult<&str, Opcode> {
     alt((parse_addx, parse_noop))(input)
 }
 
+pub fn parse_opcodes(input: &str) -> IResult<&str, Vec<Opcode>> {
+    many1(preceded(multispace0, parse_opcode))(input)
+}
+
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Op {
     opcode: Opcode,
@@ -63,12 +70,7 @@ impl FromStr for CathodeRayTube {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let operations = s
-            .trim()
-            .lines()
-            .map(|l| parse_opcode(l.trim()).map(|(_, op)| op))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| e.to_owned())?;
+        let (_, operations) = parse_opcodes(s).map_err(|e| e.to_owned())?;
         Ok(Self { operations })
     }
 }
