@@ -22,6 +22,7 @@ dependencies = [
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
+ "monkey-in-the-middle",
  "no-space-left-on-device",
  "rock-paper-scissors",
  "rope-bridge",
@@ -40,6 +41,7 @@ dependencies = [
  "camp-cleanup",
  "cathode-ray-tube",
  "criterion",
+ "monkey-in-the-middle",
  "no-space-left-on-device",
  "rock-paper-scissors",
  "rope-bridge",
@@ -60,6 +62,7 @@ dependencies = [
  "cathode-ray-tube",
  "clap 4.0.26",
  "clap_complete",
+ "monkey-in-the-middle",
  "no-space-left-on-device",
  "rock-paper-scissors",
  "rope-bridge",
@@ -485,6 +488,18 @@ name = "minimal-lexical"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "68354c5c6bd36d73ff3feceb05efa59b6acb7626617f4962be322a825e61f79a"
+
+[[package]]
+name = "monkey-in-the-middle"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
+]
 
 [[package]]
 name = "no-space-left-on-device"
