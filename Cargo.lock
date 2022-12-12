@@ -88,7 +88,7 @@ dependencies = [
 [[package]]
 name = "aoc_helpers"
 version = "1.0.0"
-source = "git+https://github.com/mattcl/aoc-helpers#a42d9277fb020408bf250daf791266b410630f46"
+source = "git+https://github.com/mattcl/aoc-helpers#eded2e696afe1a3d92b6d64008a68360c17195bc"
 dependencies = [
  "itertools",
  "num",
