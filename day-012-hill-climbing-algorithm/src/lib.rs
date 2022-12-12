@@ -8,14 +8,17 @@ use aoc_helpers::generic::{
 };
 use aoc_plumbing::{bits::char_to_num, Problem};
 
+const E_MARKER: u8 = 30;
+const S_MARKER: u8 = 44;
+
 #[derive(Debug, Clone)]
 pub struct HillClimbingAlgorithm {
-    grid: Grid<char>,
+    grid: Grid<u8>,
     end: Location,
 }
 
 impl HillClimbingAlgorithm {
-    pub fn shortest_path(&self, begin: &Location, end: char) -> Option<usize> {
+    pub fn shortest_path(&self, begin: &Location, end: u8) -> Option<usize> {
         let mut cache: DefaultLocationCache<usize> =
             DefaultLocationCache::new(self.grid.size(), self.grid.cols());
         let mut heap = BinaryHeap::new();
@@ -40,18 +43,18 @@ impl HillClimbingAlgorithm {
             }
 
             // the unwrap is safe because we never insert anything not in the grid
-            let numeric_current = match self.grid.get(&id).unwrap() {
-                'E' => char_to_num('z'),
-                'S' => char_to_num('a'),
-                x => char_to_num(*x),
+            let numeric_current = match *cur_val {
+                E_MARKER => char_to_num('z'),
+                S_MARKER => char_to_num('a'),
+                x => x,
             };
 
             for edge in id.orthogonal_neighbors() {
                 if let Some(neighbor_value) = self.grid.get(&edge) {
-                    let numeric_neighbor = match neighbor_value {
-                        'E' => char_to_num('z'),
-                        'S' => char_to_num('a'),
-                        _ => char_to_num(*neighbor_value),
+                    let numeric_neighbor = match *neighbor_value {
+                        E_MARKER => char_to_num('z'),
+                        S_MARKER => char_to_num('a'),
+                        x => x,
                     };
 
                     if numeric_neighbor >= numeric_current
@@ -82,13 +85,18 @@ impl FromStr for HillClimbingAlgorithm {
         let vals = s
             .trim()
             .lines()
-            .map(|l| l.trim().chars().collect::<Vec<_>>())
+            .map(|l| {
+                l.trim()
+                    .chars()
+                    .map(|ch| char_to_num(ch))
+                    .collect::<Vec<_>>()
+            })
             .collect::<Vec<_>>();
         let mut end = Location::default();
         'outer: for row in 0..vals.len() {
             for col in 0..vals[0].len() {
                 let v = vals[row][col];
-                if v == 'E' {
+                if v == E_MARKER {
                     end.row = row;
                     end.col = col;
                     break 'outer;
@@ -113,12 +121,12 @@ impl Problem for HillClimbingAlgorithm {
     type P2 = usize;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        self.shortest_path(&self.end, 'S')
+        self.shortest_path(&self.end, char_to_num('S'))
             .ok_or_else(|| anyhow!("no path found"))
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        self.shortest_path(&self.end, 'a')
+        self.shortest_path(&self.end, char_to_num('a'))
             .ok_or_else(|| anyhow!("no path found"))
     }
 }
