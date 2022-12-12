@@ -99,7 +99,7 @@ fn parse_test(input: &str) -> IResult<&str, Test> {
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Monkey {
     id: usize,
-    items_inspected: usize,
+    items_inspected: u64,
     items: VecDeque<u64>,
     operation: Operation,
     test: Test,
@@ -207,8 +207,8 @@ impl Problem for MonkeyInTheMiddle {
     const README: &'static str = include_str!("../README.md");
 
     type ProblemError = anyhow::Error;
-    type P1 = usize;
-    type P2 = usize;
+    type P1 = u64;
+    type P2 = u64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
         let mut working = self.clone();

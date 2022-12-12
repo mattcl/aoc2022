@@ -4,6 +4,7 @@ use aoc_benchmarking::aoc_benches;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
+use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
@@ -93,6 +94,13 @@ aoc_benches! {
         day_011,
         "../day-011-monkey-in-the-middle/input.txt",
         MonkeyInTheMiddle,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_012,
+        "../day-012-hill-climbing-algorithm/input.txt",
+        HillClimbingAlgorithm,
         "Part 1",
         "Part 2"
     ),

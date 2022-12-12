@@ -10,6 +10,7 @@ use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
+use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use rock_paper_scissors::RockPaperScissors;
@@ -160,5 +161,6 @@ generate_cli! {
     (RopeBridge, 9),
     (CathodeRayTube, 10),
     (MonkeyInTheMiddle, 11),
+    (HillClimbingAlgorithm, 12),
     // command_marker
 }
