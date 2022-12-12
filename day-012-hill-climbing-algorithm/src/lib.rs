@@ -2,7 +2,7 @@ use std::{collections::BinaryHeap, str::FromStr};
 
 use anyhow::anyhow;
 use aoc_helpers::generic::{
-    pathing::{DNode, DefaultLocationCache},
+    pathing::{DASTNode, DNode, DefaultLocationCache},
     prelude::*,
     Grid, Location,
 };
@@ -76,6 +76,71 @@ impl HillClimbingAlgorithm {
 
         None
     }
+
+    pub fn shortest_path_known_destination(
+        &self,
+        begin: &Location,
+        end: &Location,
+    ) -> Option<usize> {
+        let mut cache: DefaultLocationCache<usize> =
+            DefaultLocationCache::new(self.grid.size(), self.grid.cols());
+        let mut heap = BinaryHeap::new();
+
+        let start = DASTNode {
+            id: *begin,
+            cost: 0,
+            path: 0,
+        };
+        cache.cache_set(&start.id, 0);
+        heap.push(start);
+
+        while let Some(DASTNode { id, cost, path }) = heap.pop() {
+            // the unwrap is safe because we never insert anything not in the grid
+            let cur_val = self.grid.get(&id).unwrap();
+
+            if id == *end {
+                return Some(path);
+            }
+
+            if cost > cache.cache_get(&id) {
+                continue;
+            }
+
+            // the unwrap is safe because we never insert anything not in the grid
+            let numeric_current = match *cur_val {
+                E_MARKER => char_to_num('z'),
+                S_MARKER => char_to_num('a'),
+                x => x,
+            };
+
+            for edge in id.orthogonal_neighbors() {
+                if let Some(neighbor_value) = self.grid.get(&edge) {
+                    let numeric_neighbor = match *neighbor_value {
+                        E_MARKER => char_to_num('z'),
+                        S_MARKER => char_to_num('a'),
+                        x => x,
+                    };
+
+                    if numeric_neighbor >= numeric_current
+                        || numeric_current - numeric_neighbor == 1
+                    {
+                        let next = DASTNode {
+                            id: edge,
+                            cost: cost + edge.manhattan_dist(end),
+                            path: path + 1,
+                        };
+
+                        if next.cost < cache.cache_get(&next.id) {
+                            cache.cache_set(&next.id, next.cost);
+                            heap.push(next);
+                        }
+                    }
+                }
+            }
+        }
+
+        None
+    }
 }
 
 impl FromStr for HillClimbingAlgorithm {
@@ -121,7 +186,18 @@ impl Problem for HillClimbingAlgorithm {
     type P2 = usize;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        self.shortest_path(&self.end, char_to_num('S'))
+        let mut end = Location::default();
+        'outer: for row in 0..self.grid.rows() {
+            for col in 0..self.grid.cols() {
+                if self.grid.locations[row][col] == S_MARKER {
+                    end.row = row;
+                    end.col = col;
+                    break 'outer;
+                }
+            }
+        }
+
+        self.shortest_path_known_destination(&self.end, &end)
             .ok_or_else(|| anyhow!("no path found"))
     }
 
