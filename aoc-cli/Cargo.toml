@@ -9,6 +9,9 @@ description = "A command line interface for executing Advent of Code solutions."
 name = "aoc"
 path = "src/main.rs"
 
+[features]
+par = ["distress-signal/par"]
+
 [dependencies]
 aoc-plumbing = { path = "../aoc-plumbing" }
 anyhow = { workspace = true }
