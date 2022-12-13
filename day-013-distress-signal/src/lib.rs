@@ -3,12 +3,13 @@ use std::str::FromStr;
 use aoc_plumbing::Problem;
 use nom::{
     branch::alt,
-    bytes::complete::tag,
-    character::complete::{newline, space0},
+    character::complete::{self, multispace0, newline, space0},
     multi::{separated_list0, separated_list1},
     sequence::{delimited, preceded, separated_pair, tuple},
     IResult,
 };
+#[cfg(feature = "par")]
+use rayon::prelude::*;
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub enum Value {
@@ -23,9 +24,9 @@ fn parse_number(input: &str) -> IResult<&str, Value> {
 
 fn parse_list(input: &str) -> IResult<&str, Value> {
     let (input, values) = delimited(
-        tag("["),
-        separated_list0(tag(","), alt((parse_number, parse_list))),
-        tag("]"),
+        complete::char('['),
+        separated_list0(complete::char(','), alt((parse_number, parse_list))),
+        complete::char(']'),
     )(input)?;
 
     Ok((input, Value::List(values)))
@@ -79,8 +80,12 @@ fn parse_packet_pair(input: &str) -> IResult<&str, PacketPair> {
     Ok((input, PacketPair { left, right }))
 }
 
+#[allow(dead_code)]
 fn parse_packet_pairs(input: &str) -> IResult<&str, Vec<PacketPair>> {
-    separated_list1(tuple((newline, newline)), parse_packet_pair)(input)
+    preceded(
+        multispace0,
+        separated_list1(tuple((newline, newline)), parse_packet_pair),
+    )(input)
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -92,7 +97,17 @@ impl FromStr for DistressSignal {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, packet_pairs) = parse_packet_pairs(s.trim()).map_err(|e| e.to_owned())?;
+        #[cfg(not(feature = "par"))]
+        let (_, packet_pairs) = parse_packet_pairs(s).map_err(|e| e.to_owned())?;
+        #[cfg(feature = "par")]
+        // There's a limitation with par_split that it doesn't split on a full pattern
+        let packet_pairs = s
+            .trim()
+            .replace("\n\n", ":")
+            .par_split(':')
+            .map(|g| parse_packet_pair(g).map(|(_, p)| p))
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| e.to_owned())?;
         Ok(Self { packet_pairs })
     }
 }

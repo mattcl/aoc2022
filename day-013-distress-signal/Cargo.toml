@@ -6,6 +6,8 @@ edition = "2021"
 description = "distress signal"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[features]
+par = ["dep:rayon"]
 
 [dependencies]
 aoc_helpers = { workspace = true }
@@ -13,6 +15,6 @@ aoc-plumbing = { path = "../aoc-plumbing" }
 anyhow = { workspace = true }
 # itertools = { workspace = true }
 nom = { workspace = true }
-# rayon = { workspace = true }
+rayon = { workspace = true, optional = true }
 rustc-hash = { workspace = true }
 serde = { workspace = true }

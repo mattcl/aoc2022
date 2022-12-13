@@ -361,6 +361,7 @@ dependencies = [
  "aoc-plumbing",
  "aoc_helpers",
  "nom",
+ "rayon",
  "rustc-hash",
  "serde",
 ]

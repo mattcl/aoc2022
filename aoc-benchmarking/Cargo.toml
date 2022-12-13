@@ -8,6 +8,9 @@ description = "Wrapper for having benchmarks in a single place."
 name = "bench_main"
 harness = false
 
+[features]
+par = ["distress-signal/par"]
+
 [dev-dependencies]
 criterion = "0.4.0"
 
