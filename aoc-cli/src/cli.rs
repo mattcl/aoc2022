@@ -10,6 +10,7 @@ use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
+use distress_signal::DistressSignal;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
@@ -162,5 +163,6 @@ generate_cli! {
     (CathodeRayTube, 10),
     (MonkeyInTheMiddle, 11),
     (HillClimbingAlgorithm, 12),
+    (DistressSignal, 13),
     // command_marker
 }

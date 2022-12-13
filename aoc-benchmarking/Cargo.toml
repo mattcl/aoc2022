@@ -25,3 +25,4 @@ rope-bridge = { path = "../day-009-rope-bridge" }
 cathode-ray-tube = { path = "../day-010-cathode-ray-tube" }
 monkey-in-the-middle = { path = "../day-011-monkey-in-the-middle" }
 hill-climbing-algorithm = { path = "../day-012-hill-climbing-algorithm" }
+distress-signal = { path = "../day-013-distress-signal" }
