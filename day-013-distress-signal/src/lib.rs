@@ -44,6 +44,8 @@ impl Ord for Value {
             },
             Self::List(me) => match other {
                 Self::Number(_) => self.cmp(&Self::List(vec![other.clone()])),
+                // rust list ordering already implements the specified rules
+                // from the problem
                 Self::List(them) => me.cmp(them),
             },
         }
@@ -115,26 +117,39 @@ impl Problem for DistressSignal {
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
+        // We don't need to sort becuse we just care about the indicies of the
+        // two divider packets, and we don't care where everything else is.
+        //
+        // Because we implemented Ord we _could_ sort, of course
+        let mut div1_index = 1;
+        let mut div2_index = 2; // this starts at two because div1 is smaller
+
+        // let div1 = Value::List(vec![Value::Number(2)]);
+        // let div2 = Value::List(vec![Value::Number(6)]);
+        //
+        // for some reason, this is _faster_ than constructing them directly
         let (_, div1) = parse_value("[[2]]").map_err(|e| e.to_owned())?;
         let (_, div2) = parse_value("[[6]]").map_err(|e| e.to_owned())?;
 
-        let mut divider_packets = vec![&div1, &div2];
-
         for pair in self.packet_pairs.iter() {
-            divider_packets.push(&pair.right);
-            divider_packets.push(&pair.left);
-        }
+            if div1 > pair.right {
+                div1_index += 1;
+            }
 
-        divider_packets.sort();
+            if div2 > pair.right {
+                div2_index += 1;
+            }
 
-        let mut prod = 1;
-        for (i, packet) in divider_packets.iter().enumerate() {
-            if **packet == div1 || **packet == div2 {
-                prod *= i + 1;
+            if div1 > pair.left {
+                div1_index += 1;
+            }
+
+            if div2 > pair.left {
+                div2_index += 1;
             }
         }
 
-        Ok(prod)
+        Ok(div1_index * div2_index)
     }
 }
 
