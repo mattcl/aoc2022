@@ -14,6 +14,7 @@ use distress_signal::DistressSignal;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
+use regolith_reservoir::RegolithReservoir;
 use rock_paper_scissors::RockPaperScissors;
 use rope_bridge::RopeBridge;
 use rucksack_reorganization::RucksackReorganization;
@@ -164,5 +165,6 @@ generate_cli! {
     (MonkeyInTheMiddle, 11),
     (HillClimbingAlgorithm, 12),
     (DistressSignal, 13),
+    (RegolithReservoir, 14),
     // command_marker
 }
