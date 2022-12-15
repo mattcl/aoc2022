@@ -168,6 +168,9 @@ impl Segment {
     }
 }
 
+/// Generic over N and M so that we can run the example tests.
+///
+/// N is the target Y row for part 1, and M is the upper bound for part 2
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct BeaconExclusionZoneGen<const N: i64, const M: i64> {
     sensors: Vec<Sensor>,
@@ -253,7 +256,11 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
         // there are 4 lines that lie just beyond the borders of every diamond
         // region the sensors can see. If we calculate the intersection of all
         // of these lines, then we know the only possible points that could be
-        // candidates for the beacon that satisfies the search criteria
+        // candidates for the beacon that satisfies the search criteria.
+        //
+        // We know the beacon must lie one the lines because if it were possible
+        // for the beacon to not be on one of these lines, there would be
+        // multiple solutions instead of a unique one.
         let mut lines = Vec::with_capacity(self.sensors.len() * 4);
         for sensor in self.sensors.iter() {
             let mut sensor_lines = sensor.lines();
@@ -290,6 +297,7 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
     }
 }
 
+/// We expose this type for the actual solver and such.
 pub type BeaconExclusionZone = BeaconExclusionZoneGen<2_000_000, 4_000_000>;
 
 #[cfg(test)]
