@@ -22,3 +22,4 @@ monkey-in-the-middle = { path = "../day-011-monkey-in-the-middle" }
 hill-climbing-algorithm = { path = "../day-012-hill-climbing-algorithm" }
 distress-signal = { path = "../day-013-distress-signal" }
 regolith-reservoir = { path = "../day-014-regolith-reservoir" }
+beacon-exclusion-zone = { path = "../day-015-beacon-exclusion-zone" }

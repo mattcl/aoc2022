@@ -19,6 +19,7 @@ name = "aoc"
 version = "0.1.0"
 dependencies = [
  "aoc-plumbing",
+ "beacon-exclusion-zone",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -40,6 +41,7 @@ name = "aoc-benchmarking"
 version = "0.1.0"
 dependencies = [
  "aoc-plumbing",
+ "beacon-exclusion-zone",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -63,6 +65,7 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "aoc-plumbing",
+ "beacon-exclusion-zone",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -118,6 +121,18 @@ name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d468802bab17cbc0cc575e9b053f41e72aa36bfa6b7f55e3529ffa43161b97fa"
+
+[[package]]
+name = "beacon-exclusion-zone"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
+]
 
 [[package]]
 name = "bitflags"

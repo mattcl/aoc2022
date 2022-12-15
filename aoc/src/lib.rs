@@ -2,6 +2,7 @@
 //!
 //! The intent is to provide a nice import for the external bencher.
 
+pub use beacon_exclusion_zone::BeaconExclusionZone;
 pub use calorie_counting::CalorieCounting;
 pub use camp_cleanup::CampCleanup;
 pub use cathode_ray_tube::CathodeRayTube;

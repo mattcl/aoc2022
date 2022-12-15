@@ -5,6 +5,7 @@ use std::{
 
 use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
+use beacon_exclusion_zone::BeaconExclusionZone;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
@@ -166,5 +167,6 @@ generate_cli! {
     (HillClimbingAlgorithm, 12),
     (DistressSignal, 13),
     (RegolithReservoir, 14),
+    (BeaconExclusionZone, 15),
     // command_marker
 }

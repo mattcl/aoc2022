@@ -1,6 +1,7 @@
 use criterion::criterion_main;
 
 use aoc_benchmarking::aoc_benches;
+use beacon_exclusion_zone::BeaconExclusionZone;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
@@ -117,6 +118,13 @@ aoc_benches! {
         day_014,
         "../day-014-regolith-reservoir/input.txt",
         RegolithReservoir,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_015,
+        "../day-015-beacon-exclusion-zone/input.txt",
+        BeaconExclusionZone,
         "Part 1",
         "Part 2"
     ),
