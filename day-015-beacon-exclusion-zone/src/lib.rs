@@ -26,14 +26,14 @@ impl Point {
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Line {
-    slope: i64,
+    positive_slope: bool,
     y_intersect: i64,
 }
 
 impl Line {
     pub fn intersection(&self, other: &Self) -> Option<Point> {
-        if self != other && self.slope != other.slope {
-            if self.slope > 0 {
+        if self.positive_slope != other.positive_slope && self != other {
+            if self.positive_slope {
                 let delta = other.y_intersect - self.y_intersect;
                 if delta % 2 == 0 {
                     let x = delta / 2;
@@ -80,28 +80,29 @@ impl Sensor {
     /// Generate lines parallel to our sensor range but one unit outside of range
     pub fn lines(&self) -> Vec<Line> {
         let mut res = Vec::with_capacity(4);
-        let p1_x = self.location.x + self.dist_to_closest + 1;
+        let offset = self.dist_to_closest + 1;
+        let p1_x = self.location.x + offset;
         let p1_y = self.location.y;
         let a = p1_y - p1_x;
         res.push(Line {
-            slope: 1,
+            positive_slope: true,
             y_intersect: a,
         });
         res.push(Line {
-            slope: 1,
-            y_intersect: a + 2 * (self.dist_to_closest + 1),
+            positive_slope: true,
+            y_intersect: a + 2 * offset,
         });
 
-        let p1_x = self.location.x - self.dist_to_closest - 1;
+        let p1_x = self.location.x - offset;
         let p1_y = self.location.y;
         let a = p1_y + p1_x;
         res.push(Line {
-            slope: -1,
+            positive_slope: false,
             y_intersect: a,
         });
         res.push(Line {
-            slope: -1,
-            y_intersect: a + 2 * (self.dist_to_closest + 1),
+            positive_slope: false,
+            y_intersect: a + 2 * offset,
         });
 
         res
@@ -223,6 +224,8 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
     type P2 = i64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
+        // we know because of the limitations of the problem in part 2 that
+        // we don't have to worry aobut multiple candidates.
         let mut segments = self
             .sensors
             .iter()
@@ -258,30 +261,33 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
         // of these lines, then we know the only possible points that could be
         // candidates for the beacon that satisfies the search criteria.
         //
-        // We know the beacon must lie one the lines because if it were possible
-        // for the beacon to not be on one of these lines, there would be
-        // multiple solutions instead of a unique one.
+        // We know the beacon must lie on N of the lines because if it were
+        // possible for the beacon to not be on one of these lines, there would
+        // be multiple solutions instead of a unique one.
         let mut lines = Vec::with_capacity(self.sensors.len() * 4);
         for sensor in self.sensors.iter() {
             let mut sensor_lines = sensor.lines();
             lines.append(&mut sensor_lines);
         }
 
+        // now we can find the intersections of all the lines
         let mut intersections: FxHashMap<Point, usize> = FxHashMap::default();
-
         while let Some(line) = lines.pop() {
             for other in lines.iter() {
                 if let Some(pt) = line.intersection(other) {
-                    let e = intersections.entry(pt).or_default();
-                    *e += 1;
+                    if pt.x >= 0 && pt.x <= M && pt.y >= 0 && pt.y <= M {
+                        let e = intersections.entry(pt).or_default();
+                        *e += 1;
+                    }
                 }
             }
         }
 
         // there should only be one valid point, and we can prune by checking
-        // points against all the sensors
+        // points that were formed by at least 4 interesections against all the
+        // sensors.
         'searcher: for (pt, count) in intersections.iter() {
-            if *count >= 4 && pt.x >= 0 && pt.x < M && pt.y >= 0 && pt.y < M {
+            if *count >= 4 {
                 for sensor in self.sensors.iter() {
                     if sensor.location.manhattan_distance(pt) <= sensor.dist_to_closest {
                         continue 'searcher;
