@@ -355,14 +355,19 @@ impl Problem for RegolithReservoir {
         // each direction, so we can math our way into the quanity of sand
         // beyond what we can see. We are making the assumption that we have
         // some space on either side of the source, which is fixed at 500
+        //
+        // west side:
         let offset = 500 - self.bounds.min_x;
         if offset < self.bounds.max_y {
-            working.sand_count += (1..=(self.bounds.max_y - offset)).sum::<usize>();
+            let delta = self.bounds.max_y - offset;
+            working.sand_count += (delta * (delta + 1)) / 2;
         }
 
+        // and the east side:
         let offset = self.bounds.max_x - 500;
         if offset < self.bounds.max_y {
-            working.sand_count += (1..=(self.bounds.max_y - offset)).sum::<usize>();
+            let delta = self.bounds.max_y - offset;
+            working.sand_count += (delta * (delta + 1)) / 2;
         }
 
         Ok(working.sand_count)

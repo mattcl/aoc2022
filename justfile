@@ -14,5 +14,10 @@ bench DAY:
 bench_all:
     cargo bench -p aoc-benchmarking
 
+# makes a flamegraph for the given day
 flame DAY:
     scripts/flame.sh {{DAY}}
+
+# builds the cli
+build-cli:
+    cargo build -p aoc-cli --release
