@@ -273,29 +273,28 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
         // now we can find the intersections of all the lines
         let mut intersections: FxHashMap<Point, usize> = FxHashMap::default();
         while let Some(line) = lines.pop() {
-            for other in lines.iter() {
+            'intersector: for other in lines.iter() {
                 if let Some(pt) = line.intersection(other) {
                     if pt.x >= 0 && pt.x <= M && pt.y >= 0 && pt.y <= M {
                         let e = intersections.entry(pt).or_default();
                         *e += 1;
+
+                        // there should only be one valid point, and we can prune by checking
+                        // points that were formed by at least 4 interesections against all the
+                        // sensors.
+                        if *e >= 4 {
+                            for sensor in self.sensors.iter() {
+                                if sensor.location.manhattan_distance(&pt) <= sensor.dist_to_closest
+                                {
+                                    continue 'intersector;
+                                }
+                            }
+
+                            // if we're here, we passed all the sensors
+                            return Ok(pt.x * 4_000_000 + pt.y);
+                        }
                     }
                 }
-            }
-        }
-
-        // there should only be one valid point, and we can prune by checking
-        // points that were formed by at least 4 interesections against all the
-        // sensors.
-        'searcher: for (pt, count) in intersections.iter() {
-            if *count >= 4 {
-                for sensor in self.sensors.iter() {
-                    if sensor.location.manhattan_distance(pt) <= sensor.dist_to_closest {
-                        continue 'searcher;
-                    }
-                }
-
-                // if we're here, we passed all the sensors
-                return Ok(pt.x * 4_000_000 + pt.y);
             }
         }
 
