@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, str::FromStr};
+use std::{collections::VecDeque, str::FromStr, hash::Hash};
 
 use anyhow::bail;
 use aoc_helpers::generic::Bound2D;
@@ -12,7 +12,7 @@ use nom::{
 };
 use rustc_hash::FxHashMap;
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
 pub struct Point {
     x: i64,
     y: i64,
@@ -21,6 +21,12 @@ pub struct Point {
 impl Point {
     pub fn manhattan_distance(&self, other: &Self) -> i64 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
+}
+
+impl Hash for Point {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write_i64(self.x + 4_000_000 * self.y);
     }
 }
 
