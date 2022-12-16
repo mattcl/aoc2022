@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, str::FromStr, hash::Hash};
+use std::{collections::VecDeque, hash::Hash, str::FromStr};
 
 use anyhow::bail;
 use aoc_helpers::generic::Bound2D;

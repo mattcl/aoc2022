@@ -10,6 +10,7 @@ pub use distress_signal::DistressSignal;
 pub use hill_climbing_algorithm::HillClimbingAlgorithm;
 pub use monkey_in_the_middle::MonkeyInTheMiddle;
 pub use no_space_left_on_device::NoSpaceLeftOnDevice;
+pub use proboscidea_volcanium::ProboscideaVolcanium;
 pub use regolith_reservoir::RegolithReservoir;
 pub use rock_paper_scissors::RockPaperScissors;
 pub use rope_bridge::RopeBridge;

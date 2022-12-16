@@ -27,6 +27,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "proboscidea-volcanium",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -50,6 +51,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "proboscidea-volcanium",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -75,6 +77,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "proboscidea-volcanium",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -728,6 +731,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f9a81d2759aae1dae668f783c308bc5c8ebd191ff4184aaa1b37f65a6ae5a56f"
 dependencies = [
  "plotters-backend",
+]
+
+[[package]]
+name = "proboscidea-volcanium"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]

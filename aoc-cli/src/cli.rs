@@ -15,6 +15,7 @@ use distress_signal::DistressSignal;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
+use proboscidea_volcanium::ProboscideaVolcanium;
 use regolith_reservoir::RegolithReservoir;
 use rock_paper_scissors::RockPaperScissors;
 use rope_bridge::RopeBridge;
@@ -168,5 +169,6 @@ generate_cli! {
     (DistressSignal, 13),
     (RegolithReservoir, 14),
     (BeaconExclusionZone, 15),
+    (ProboscideaVolcanium, 16),
     // command_marker
 }
