@@ -35,3 +35,4 @@ distress-signal = { path = "../day-013-distress-signal" }
 regolith-reservoir = { path = "../day-014-regolith-reservoir" }
 beacon-exclusion-zone = { path = "../day-015-beacon-exclusion-zone" }
 proboscidea-volcanium = { path = "../day-016-proboscidea-volcanium" }
+pyroclastic-flow = { path = "../day-017-pyroclastic-flow" }

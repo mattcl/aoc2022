@@ -10,6 +10,7 @@ use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use proboscidea_volcanium::ProboscideaVolcanium;
+use pyroclastic_flow::PyroclasticFlow;
 use regolith_reservoir::RegolithReservoir;
 use rock_paper_scissors::RockPaperScissors;
 use rope_bridge::RopeBridge;
@@ -129,10 +130,18 @@ aoc_benches! {
         "Part 1",
         "Part 2"
     ),
+    // todo: uncomment after making this faster
+    // (
+    //     day_016,
+    //     "../day-016-proboscidea-volcanium/input.txt",
+    //     ProboscideaVolcanium,
+    //     "Part 1",
+    //     "Part 2"
+    // ),
     (
-        day_016,
-        "../day-016-proboscidea-volcanium/input.txt",
-        ProboscideaVolcanium,
+        day_017,
+        "../day-017-pyroclastic-flow/input.txt",
+        PyroclasticFlow,
         "Part 1",
         "Part 2"
     ),

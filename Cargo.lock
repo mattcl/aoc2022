@@ -28,6 +28,7 @@ dependencies = [
  "monkey-in-the-middle",
  "no-space-left-on-device",
  "proboscidea-volcanium",
+ "pyroclastic-flow",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -52,6 +53,7 @@ dependencies = [
  "monkey-in-the-middle",
  "no-space-left-on-device",
  "proboscidea-volcanium",
+ "pyroclastic-flow",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -78,6 +80,7 @@ dependencies = [
  "monkey-in-the-middle",
  "no-space-left-on-device",
  "proboscidea-volcanium",
+ "pyroclastic-flow",
  "regolith-reservoir",
  "rock-paper-scissors",
  "rope-bridge",
@@ -776,6 +779,18 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5ea3d908b0e36316caf9e9e2c4625cdde190a7e6f440d794667ed17a1855e725"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "pyroclastic-flow"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]
