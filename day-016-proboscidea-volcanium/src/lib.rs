@@ -153,24 +153,11 @@ impl Explore {
     }
 
     pub fn is_set(&self, bit: usize) -> bool {
-        self.seen & 1 << bit > 0
+        self.seen & (1 << bit) > 0
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
-pub struct State {
-    me: Explore,
-    elephant: Explore,
-}
-
-impl State {
-    pub fn finished(&self, all_valves: u64) -> bool {
-        (self.me.minutes_remaining <= 0 && self.elephant.minutes_remaining <= 0)
-            || (self.me.seen | self.elephant.seen == all_valves)
-    }
-}
-
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Default)]
 pub struct ProboscideaVolcanium {
     aa_index: usize,
     valves: Vec<Valve>,
@@ -180,16 +167,14 @@ pub struct ProboscideaVolcanium {
 }
 
 impl ProboscideaVolcanium {
-    pub fn optimal_path(&self) -> i64 {
+    pub fn optimal_path(&self, minutes: i64, cache: &mut FxHashMap<(usize, u64), i64>) -> i64 {
         let mut best = 0;
-        let mut best_seen = 0;
-        let mut cache = FxHashMap::default();
         let mut cur = Explore {
             cur: self.aa_index,
-            minutes_remaining: 30,
+            minutes_remaining: minutes,
             ..Default::default()
         };
-        self.optimal_path_recur(&mut cur, 0, &mut best, &mut best_seen, &mut cache);
+        self.optimal_path_recur(&mut cur, 0, &mut best, cache);
         best
     }
 
@@ -198,284 +183,83 @@ impl ProboscideaVolcanium {
         cur: &Explore,
         cur_best: i64,
         best: &mut i64,
-        best_seen: &mut u64,
-        cache: &mut FxHashMap<u64, i64>,
+        cache: &mut FxHashMap<(usize, u64), i64>,
     ) {
-        if cur.seen == self.all_open || cur.minutes_remaining <= 0 {
-            if cur_best > *best {
-                *best = cur_best;
-                *best_seen = cur.seen;
-            }
+        if cur_best > *best {
+            *best = cur_best;
+        }
+
+        if cur.seen == self.all_open {
+            cache.insert((cur.cur, cur.seen), cur_best);
             return;
         }
 
-        if let Some(old) = cache.get(&cur.seen) {
+        if let Some(old) = cache.get(&(cur.cur, cur.seen)) {
             if *old > cur_best {
                 return;
             }
         }
 
-        cache.insert(cur.seen, cur_best);
+        cache.insert((cur.cur, cur.seen), cur_best);
 
         // we can pick a valve to move to, opening that valve in the process
+        // we have to iterate this way to avoid the mutable/immutable borrow
         for v in self.nonzero_valves.iter() {
-            if cur.cur != *v && !cur.is_set(*v) {
+            let v = *v;
+            if cur.cur != v && !cur.is_set(v) {
                 // move to this and open it
                 // it takes an extra minute there to open the valve
-                let next_minutes = cur.minutes_remaining - self.shortest_paths[cur.cur][*v] - 1;
+                let next_minutes = cur.minutes_remaining - self.shortest_paths[cur.cur][v] - 1;
                 if next_minutes < 0 {
                     continue;
                 }
                 let mut next_cur = *cur;
-                next_cur.cur = *v;
+                next_cur.cur = v;
                 next_cur.minutes_remaining = next_minutes;
-                next_cur.set(*v);
+                next_cur.set(v);
                 self.optimal_path_recur(
                     &next_cur,
-                    cur_best + self.valves[*v].pressure_over_time(next_minutes),
+                    cur_best
+                        + self.valves[next_cur.cur].pressure_over_time(next_cur.minutes_remaining),
                     best,
-                    best_seen,
                     cache,
                 );
             }
         }
-
-        // handle the situation where we would not have been able to move
-        // anywhere else in time
-        if cur_best > *best {
-            *best = cur_best;
-            *best_seen = cur.seen;
-        }
     }
 
-    pub fn optimal_path_with_elephant(&self) -> i64 {
-        let mut best = 0;
-        let mut cache = FxHashMap::default();
+    pub fn find_best_disjoint_pair(&self, path_cache: &FxHashMap<(usize, u64), i64>) -> i64 {
+        let mut best = i64::MIN;
 
-        let me = Explore {
-            cur: self.aa_index,
-            minutes_remaining: 26,
-            ..Default::default()
-        };
+        // there's a special case where we were able to open all the valves
+        // ourself, so we need to remove that from the list
+        let mut ordered = path_cache
+            .iter()
+            .filter(|((_, m), _)| *m != self.all_open)
+            .collect::<Vec<_>>();
+        ordered.sort_by(|a, b| a.1.cmp(&b.1));
 
-        let elephant = Explore {
-            cur: self.aa_index,
-            minutes_remaining: 26,
-            ..Default::default()
-        };
+        while let Some(((_, valve_map), total)) = ordered.pop() {
+            // we know the list is sorted, so the total we have is the largest
+            // total remaining, so if we (x2) can't beat the best score so far,
+            // there is no point looking at the rest of the list.
+            if total * 2 < best {
+                break;
+            }
+            for ((_, other_map), other_total) in ordered.iter().rev() {
+                if *other_map & valve_map != 0 {
+                    continue;
+                }
 
-        // self.faster_recur(&me, &elephant, 0, &mut best, &mut cache);
-        self.optimal_path_with_elephant_recur(&me, 0, &mut best, &mut cache);
+                if total + *other_total <= best {
+                    break;
+                } else {
+                    best = total + *other_total;
+                }
+            }
+        }
+
         best
-    }
-
-    // what would the BFS solution look like?
-    //
-
-    pub fn optimal_path_with_elephant_recur(
-        &self,
-        me: &Explore,
-        cur_best: i64,
-        best: &mut i64,
-        cache: &mut FxHashMap<u64, i64>,
-    ) {
-        // the problem is that the time is different
-        if me.seen == self.all_open || me.minutes_remaining == 0 {
-            if cur_best > *best {
-                *best = cur_best;
-                // cache.insert(me.seen, *best);
-            }
-            return;
-        }
-
-        // if let Some(old) = cache.get(&me.seen) {
-        //     if *old > cur_best {
-        //         return;
-        //     }
-        // }
-
-        // cache.insert(me.seen, cur_best);
-
-        // we can pick a valve to move to, opening that valve in the process
-        for v in self.nonzero_valves.iter() {
-            if me.cur != *v && !me.is_set(*v) {
-                // move to this and open it
-                // it takes an extra minute there to open the valve
-                let next_minutes = me.minutes_remaining - self.shortest_paths[me.cur][*v] - 1;
-                if next_minutes <= 0 {
-                    // we ran out of time, so try with the elephant
-                    let mut elephant = Explore {
-                        cur: self.aa_index,
-                        seen: me.seen,
-                        minutes_remaining: 26,
-                    };
-                    let mut elephant_best = 0;
-                    let mut elephant_best_seen = 0;
-                    let mut elephant_cache = FxHashMap::default();
-
-                    self.optimal_path_recur(
-                        &mut elephant,
-                        0,
-                        &mut elephant_best,
-                        &mut elephant_best_seen,
-                        &mut elephant_cache,
-                    );
-
-                    if cur_best + elephant_best > *best {
-                        *best = cur_best + elephant_best;
-                        // cache.insert(me.seen, *best);
-                    }
-
-                    continue;
-                }
-                let mut next_me = *me;
-                next_me.cur = *v;
-                next_me.minutes_remaining = next_minutes;
-                next_me.set(*v);
-                self.optimal_path_with_elephant_recur(
-                    &next_me,
-                    cur_best + self.valves[*v].pressure_over_time(next_minutes),
-                    best,
-                    cache,
-                );
-            }
-        }
-
-        // handle the situation where we would not have been able to move
-        // anywhere else in time
-        if cur_best > *best {
-            *best = cur_best;
-        }
-    }
-
-    pub fn faster_recur(
-        &self,
-        me: &Explore,
-        elephant: &Explore,
-        cur_best: i64,
-        best: &mut i64,
-        cache: &mut FxHashMap<(u64, u64), i64>,
-    ) {
-        assert!(me.seen & elephant.seen == 0);
-        if cur_best > *best {
-            *best = cur_best;
-        }
-
-        if me.minutes_remaining == 0
-            || elephant.minutes_remaining == 0
-            || me.seen | elephant.seen == self.all_open
-        {
-            return;
-        }
-
-        if let Some(v) = cache.get(&(me.seen, elephant.seen)) {
-            if cur_best < *v {
-                return;
-            }
-        }
-
-        cache.insert((me.seen, elephant.seen), cur_best);
-
-        for me_candidate in self.nonzero_valves.iter() {
-            // if we'd be looking at our current location or a location that
-            // we've already been to, we need to just continue
-            if *me_candidate == me.cur || me.is_set(*me_candidate) || elephant.is_set(*me_candidate)
-            {
-                continue;
-            }
-
-            // prepare the next me
-            let mut next_me = *me;
-            next_me.cur = *me_candidate;
-            next_me.minutes_remaining -= self.shortest_paths[me.cur][next_me.cur] - 1;
-
-            // if at this point we couldn't continue, just finish with the
-            // elephant
-            if next_me.minutes_remaining < 0 {
-                // we ran out of time, so just finish with the elephant
-                let mut tmp_elephant = *elephant;
-                // tell the elephant which things we've seen
-                tmp_elephant.seen |= me.seen;
-                let mut elephant_best = 0;
-                let mut elephant_best_seen = 0;
-                let mut elephant_cache = FxHashMap::default();
-                self.optimal_path_recur(
-                    &tmp_elephant,
-                    0,
-                    &mut elephant_best,
-                    &mut elephant_best_seen,
-                    &mut elephant_cache,
-                );
-
-                let real_best = cur_best + elephant_best;
-                if real_best > *best {
-                    *best = real_best;
-                    cache.insert((me.seen, elephant.seen), *best);
-                }
-                continue;
-            }
-
-            // we can continue, so add this thing to the list of seen values
-            next_me.set(*me_candidate);
-
-            let next_best =
-                cur_best + self.valves[next_me.cur].pressure_over_time(next_me.minutes_remaining);
-
-            for el_candidate in self.nonzero_valves.iter() {
-                // same thing here
-                // if we'd be looking at our current location or a location that
-                // we've already been to, we need to just continue
-                if *el_candidate == elephant.cur
-                    || next_me.is_set(*el_candidate)
-                    || elephant.is_set(*el_candidate)
-                {
-                    continue;
-                }
-
-                // prepare the next elephant
-                let mut next_el = *elephant;
-                next_el.cur = *el_candidate;
-                next_el.minutes_remaining -= self.shortest_paths[elephant.cur][next_el.cur] - 1;
-
-                // if at this point we couldn't continue, just finish with the
-                // ourself
-                if next_el.minutes_remaining < 0 {
-                    // we ran out of time, so just finish with me
-                    let mut tmp_me = next_me;
-                    // tell the new me which things the elephant as seen
-                    tmp_me.seen |= elephant.seen;
-                    let mut me_best = 0;
-                    let mut me_best_seen = 0;
-                    let mut me_cache = FxHashMap::default();
-                    self.optimal_path_recur(
-                        &tmp_me,
-                        0,
-                        &mut me_best,
-                        &mut me_best_seen,
-                        &mut me_cache,
-                    );
-
-                    let real_best = next_best + me_best;
-                    if real_best > *best {
-                        *best = real_best;
-                        cache.insert((next_me.seen, elephant.seen), *best);
-                    }
-                    continue;
-                }
-
-                // prepare the next me
-                // we can continue, so add this thing to the list of seen values
-                next_el.set(*el_candidate);
-                let next_best_actual = next_best
-                    + self.valves[next_el.cur].pressure_over_time(next_el.minutes_remaining);
-
-                self.faster_recur(&next_me, &next_el, next_best_actual, best, cache)
-            }
-        }
-
-        if cur_best > *best {
-            *best = cur_best;
-        }
     }
 }
 
@@ -549,11 +333,14 @@ impl Problem for ProboscideaVolcanium {
     type P2 = i64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        Ok(self.optimal_path())
+        let mut cache = FxHashMap::default();
+        Ok(self.optimal_path(30, &mut cache))
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        Ok(self.optimal_path_with_elephant())
+        let mut cache = FxHashMap::default();
+        self.optimal_path(26, &mut cache);
+        Ok(self.find_best_disjoint_pair(&cache))
     }
 }
 
@@ -586,9 +373,29 @@ mod tests {
             Valve JJ has flow rate=21; tunnel leads to valve II
             ";
         let solution = ProboscideaVolcanium::solve(input).unwrap();
-        // FIXME: figure out why I can't get the right answer. it's related to
-        // the fact that one person can do the example in the allotted time
-        // - MCL - 2022-12-16
-        // assert_eq!(solution, Solution::new(1651, 1707));
+        assert_eq!(solution, Solution::new(1651, 1707));
+    }
+
+    #[test]
+    fn explore() {
+        let mut e = Explore {
+            cur: 0,
+            seen: 0,
+            minutes_remaining: 0,
+        };
+
+        e.set(3);
+        assert!(e.is_set(3));
+        assert_eq!(e.seen, 0b1000);
+
+        e.set(4);
+        assert!(e.is_set(3));
+        assert!(e.is_set(4));
+        assert_eq!(e.seen, 0b11000);
+
+        e.unset(3);
+        assert!(!e.is_set(3));
+        assert!(e.is_set(4));
+        assert_eq!(e.seen, 0b10000);
     }
 }

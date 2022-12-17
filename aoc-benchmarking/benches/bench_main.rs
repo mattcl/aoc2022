@@ -130,14 +130,13 @@ aoc_benches! {
         "Part 1",
         "Part 2"
     ),
-    // todo: uncomment after making this faster
-    // (
-    //     day_016,
-    //     "../day-016-proboscidea-volcanium/input.txt",
-    //     ProboscideaVolcanium,
-    //     "Part 1",
-    //     "Part 2"
-    // ),
+    (
+        day_016,
+        "../day-016-proboscidea-volcanium/input.txt",
+        ProboscideaVolcanium,
+        "Part 1",
+        "Part 2"
+    ),
     (
         day_017,
         "../day-017-pyroclastic-flow/input.txt",
