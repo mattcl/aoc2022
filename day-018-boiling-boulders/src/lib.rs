@@ -2,7 +2,7 @@ use std::str::FromStr;
 
 use aoc_plumbing::Problem;
 use nom::{character::complete::multispace1, multi::separated_list1, sequence::tuple, IResult};
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Bounds {
@@ -121,63 +121,111 @@ impl FromStr for BoilingBoulders {
             cubes.insert(cube);
         }
 
+        bounds.min_x -= 1;
+        bounds.min_y -= 1;
+        bounds.min_z -= 1;
+        bounds.max_x += 1;
+        bounds.max_y += 1;
+        bounds.max_z += 1;
+
         Ok(Self { cubes, bounds })
     }
 }
 
 impl BoilingBoulders {
-    pub fn connects_to_outside(
-        &self,
-        loc: &Cube,
-        outside_map: &mut FxHashMap<Cube, bool>,
-        seen: &mut FxHashSet<Cube>,
-    ) -> bool {
-        if let Some(v) = outside_map.get(loc) {
-            return *v;
-        }
+    pub fn outer_surface(&self) -> usize {
+        // pick a place on the bounds and bfs to the other corner
+        let start = Cube {
+            x: self.bounds.min_x,
+            y: self.bounds.min_y,
+            z: self.bounds.min_z,
+        };
 
-        seen.insert(*loc);
+        let mut fringe = Vec::default();
+        let mut seen = FxHashSet::default();
+        seen.insert(start);
+        fringe.push(start);
 
-        for neighbor in loc.neighbors() {
-            // we don't care about examining locations that are not air
-            if self.cubes.contains(&neighbor) {
-                continue;
-            }
+        self.surface_recur(fringe, &mut seen)
+    }
 
-            if seen.contains(&neighbor) {
-                continue;
-            }
+    pub fn surface_recur(&self, fringe: Vec<Cube>, seen: &mut FxHashSet<Cube>) -> usize {
+        let mut sum = 0;
+        let mut next_fringe = Vec::with_capacity(fringe.len());
 
-            // if we've already determined the status of this cube, everything
-            // else must be this value
-            if let Some(v) = outside_map.get(&neighbor).copied() {
-                for cube in seen.iter() {
-                    outside_map.insert(*cube, v);
+        for cube in fringe.iter() {
+            for neighbor in cube.neighbors() {
+                if self.bounds.does_not_contain(&neighbor) {
+                    continue;
                 }
-                return v;
-            }
 
-            // we know we've found an edge, so everytyhing we seen touches the
-            // outside
-            if self.bounds.does_not_contain(&neighbor) {
-                for cube in seen.iter() {
-                    outside_map.insert(*cube, true);
+                if seen.contains(&neighbor) {
+                    continue;
                 }
-                return true;
-            }
 
-            // otherwise, we need to recur
-            if self.connects_to_outside(&neighbor, outside_map, seen) {
-                return true;
+                // luckily we're counting surface area, or we'd have to record
+                // this collision
+                if self.cubes.contains(&neighbor) {
+                    sum += 1;
+                    continue;
+                }
+
+                seen.insert(neighbor);
+                next_fringe.push(neighbor);
             }
         }
 
-        // if we get here, everything we've seen does not touch the outside
-        for cube in seen.iter() {
-            outside_map.insert(*cube, false);
+        if next_fringe.is_empty() {
+            return sum;
         }
 
-        false
+        sum + self.surface_recur(next_fringe, seen)
+    }
+
+    // this was a test, and it doesn't improve performance with the given input
+    pub fn outer_surface_iterative(&self) -> usize {
+        // pick a place on the bounds and bfs to the other corner
+        let start = Cube {
+            x: self.bounds.min_x,
+            y: self.bounds.min_y,
+            z: self.bounds.min_z,
+        };
+
+        let mut fringe = Vec::default();
+        let mut seen = FxHashSet::default();
+        seen.insert(start);
+        fringe.push(start);
+
+        let mut sum = 0;
+
+        loop {
+            let mut next_fringe = Vec::with_capacity(fringe.len());
+            for cube in fringe.iter() {
+                for neighbor in cube.neighbors() {
+                    if self.bounds.does_not_contain(&neighbor) {
+                        continue;
+                    }
+                    if seen.contains(&neighbor) {
+                        continue;
+                    }
+                    if self.cubes.contains(&neighbor) {
+                        sum += 1;
+                        continue;
+                    }
+                    seen.insert(neighbor);
+
+                    next_fringe.push(neighbor);
+                }
+            }
+
+            if next_fringe.is_empty() {
+                break;
+            }
+
+            fringe = next_fringe;
+        }
+
+        sum
     }
 }
 
@@ -201,23 +249,7 @@ impl Problem for BoilingBoulders {
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        // there are only ~9k cubes possible with the input, so we can probably
-        // just fill them all in.
-        let mut outside_map: FxHashMap<Cube, bool> = FxHashMap::default();
-        let sum = self
-            .cubes
-            .iter()
-            .map(|cube| {
-                cube.neighbors()
-                    .filter(|n| {
-                        let mut seen = FxHashSet::default();
-                        !self.cubes.contains(n)
-                            && self.connects_to_outside(n, &mut outside_map, &mut seen)
-                    })
-                    .count()
-            })
-            .sum::<usize>();
-        Ok(sum)
+        Ok(self.outer_surface())
     }
 }
 
