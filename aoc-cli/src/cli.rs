@@ -6,6 +6,7 @@ use std::{
 use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
 use beacon_exclusion_zone::BeaconExclusionZone;
+use boiling_boulders::BoilingBoulders;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
@@ -172,5 +173,6 @@ generate_cli! {
     (BeaconExclusionZone, 15),
     (ProboscideaVolcanium, 16),
     (PyroclasticFlow, 17),
+    (BoilingBoulders, 18),
     // command_marker
 }

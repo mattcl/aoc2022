@@ -20,6 +20,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-plumbing",
  "beacon-exclusion-zone",
+ "boiling-boulders",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -44,6 +45,7 @@ version = "0.1.0"
 dependencies = [
  "aoc-plumbing",
  "beacon-exclusion-zone",
+ "boiling-boulders",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -70,6 +72,7 @@ dependencies = [
  "anyhow",
  "aoc-plumbing",
  "beacon-exclusion-zone",
+ "boiling-boulders",
  "calorie-counting",
  "camp-cleanup",
  "cathode-ray-tube",
@@ -145,6 +148,18 @@ name = "bitflags"
 version = "1.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bef38d45163c2f1dde094a7dfd33ccf595c92905c8f8f4fdc18d06fb1037718a"
+
+[[package]]
+name = "boiling-boulders"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
+]
 
 [[package]]
 name = "bumpalo"

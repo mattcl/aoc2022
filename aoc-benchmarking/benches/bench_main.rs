@@ -2,6 +2,7 @@ use criterion::criterion_main;
 
 use aoc_benchmarking::aoc_benches;
 use beacon_exclusion_zone::BeaconExclusionZone;
+use boiling_boulders::BoilingBoulders;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
@@ -141,6 +142,13 @@ aoc_benches! {
         day_017,
         "../day-017-pyroclastic-flow/input.txt",
         PyroclasticFlow,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_018,
+        "../day-018-boiling-boulders/input.txt",
+        BoilingBoulders,
         "Part 1",
         "Part 2"
     ),
