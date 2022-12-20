@@ -4,7 +4,7 @@ use anyhow::anyhow;
 use aoc_plumbing::Problem;
 use nom::{character::complete::newline, multi::separated_list1, IResult};
 
-pub const DECRYPTION_KEY: i128 = 811589153;
+pub const DECRYPTION_KEY: i64 = 811589153;
 
 fn parse_numbers(input: &str) -> IResult<&str, Vec<i64>> {
     separated_list1(newline, nom::character::complete::i64)(input)
@@ -16,27 +16,17 @@ pub struct GrovePositioningSystem {
 }
 
 impl GrovePositioningSystem {
-    pub fn mix(&self, iterations: usize, decryption_key: i128) -> Result<i128, anyhow::Error> {
-        let len = self.numbers.len() as i128;
-        let mut min = i128::MAX;
+    pub fn mix(&self, iterations: usize, decryption_key: i64) -> Result<i64, anyhow::Error> {
+        let len = self.numbers.len() as i64;
         let mut working: Vec<_> = self
             .numbers
             .iter()
             .enumerate()
             .map(|(idx, v)| {
-                let res = *v as i128 * decryption_key;
-                if res < min {
-                    min = res;
-                }
-                (idx as i128, res)
+                let res = *v * decryption_key;
+                (idx as i64, res)
             })
             .collect();
-
-        // we need to make sure we don't get negative indicies, so determine
-        // how many additional len - 1 we have to add to ensure we can never be
-        // negative. We're using len - 1 because that'll be the length of the
-        // adjusted list while calculating indicies.
-        let factor = min.abs() / (len - 1) + 1;
 
         for _ in 0..iterations {
             for i in 0..len {
@@ -51,8 +41,10 @@ impl GrovePositioningSystem {
                 }
 
                 let old = working.remove(pos);
-                let target = pos as i128 + old.1 + (len - 1) * factor;
-                // we can never be zero
+                let target = (pos as i64 + old.1).rem_euclid(len - 1);
+
+                // this branch never executes, but it gains me 8% performance
+                // for some dumb resaon so it's staying
                 if target == len - 1 {
                     working.push(old);
                 } else {
@@ -65,7 +57,7 @@ impl GrovePositioningSystem {
         let mut zero = 0;
         for i in 0..working.len() {
             if working[i].1 == 0 {
-                zero = i as i128;
+                zero = i as i64;
                 break;
             }
         }
@@ -93,8 +85,8 @@ impl Problem for GrovePositioningSystem {
     const README: &'static str = include_str!("../README.md");
 
     type ProblemError = anyhow::Error;
-    type P1 = i128;
-    type P2 = i128;
+    type P1 = i64;
+    type P2 = i64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
         self.mix(1, 1)
