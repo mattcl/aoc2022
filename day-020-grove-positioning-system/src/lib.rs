@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{collections::VecDeque, str::FromStr};
 
 use anyhow::anyhow;
 use aoc_plumbing::Problem;
@@ -18,7 +18,7 @@ pub struct GrovePositioningSystem {
 impl GrovePositioningSystem {
     pub fn mix(&self, iterations: usize, decryption_key: i64) -> Result<i64, anyhow::Error> {
         let len = self.numbers.len() as i64;
-        let mut working: Vec<_> = self
+        let mut working: VecDeque<_> = self
             .numbers
             .iter()
             .enumerate()
@@ -40,13 +40,13 @@ impl GrovePositioningSystem {
                     continue;
                 }
 
-                let old = working.remove(pos);
+                let old = working.remove(pos).unwrap();
                 let target = (pos as i64 + old.1).rem_euclid(len - 1);
 
                 // this branch never executes, but it gains me 8% performance
                 // for some dumb resaon so it's staying
                 if target == len - 1 {
-                    working.push(old);
+                    working.push_back(old);
                 } else {
                     let idx = (target % (len - 1)) as usize;
                     working.insert(idx, old);
