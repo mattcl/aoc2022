@@ -7,6 +7,7 @@ use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
 use distress_signal::DistressSignal;
+use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
@@ -157,6 +158,13 @@ aoc_benches! {
         day_019,
         "../day-019-not-enough-minerals/input.txt",
         NotEnoughMinerals,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_020,
+        "../day-020-grove-positioning-system/input.txt",
+        GrovePositioningSystem,
         "Part 1",
         "Part 2"
     ),

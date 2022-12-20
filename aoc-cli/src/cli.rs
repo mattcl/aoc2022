@@ -13,6 +13,7 @@ use cathode_ray_tube::CathodeRayTube;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use distress_signal::DistressSignal;
+use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
@@ -176,5 +177,6 @@ generate_cli! {
     (PyroclasticFlow, 17),
     (BoilingBoulders, 18),
     (NotEnoughMinerals, 19),
+    (GrovePositioningSystem, 20),
     // command_marker
 }
