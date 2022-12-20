@@ -5,9 +5,9 @@ use aoc_plumbing::Problem;
 use nom::{
     branch::alt,
     bytes::complete::tag,
-    character::complete::{alpha1, multispace0},
+    character::complete::{alpha1, newline},
     multi::separated_list1,
-    sequence::{delimited, preceded, tuple},
+    sequence::{preceded, tuple},
     IResult,
 };
 use rustc_hash::FxHashMap;
@@ -129,11 +129,7 @@ fn parse_valve<'a>(input: &'a str) -> IResult<&str, RawValve<'a>> {
 }
 
 fn parse_valves<'a>(input: &'a str) -> IResult<&str, Vec<RawValve<'a>>> {
-    delimited(
-        multispace0,
-        separated_list1(multispace0, parse_valve),
-        multispace0,
-    )(input)
+    separated_list1(newline, parse_valve)(input)
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
@@ -267,7 +263,7 @@ impl FromStr for ProboscideaVolcanium {
     type Err = anyhow::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let (_, raw_valves) = parse_valves(s).map_err(|e| e.to_owned())?;
+        let (_, raw_valves) = parse_valves(s.trim()).map_err(|e| e.to_owned())?;
 
         // make a temporary name -> idx map and a list of the nonzero valves
         let mut valves_map = FxHashMap::default();
@@ -360,18 +356,16 @@ mod tests {
 
     #[test]
     fn example() {
-        let input = "
-            Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
-            Valve BB has flow rate=13; tunnels lead to valves CC, AA
-            Valve CC has flow rate=2; tunnels lead to valves DD, BB
-            Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
-            Valve EE has flow rate=3; tunnels lead to valves FF, DD
-            Valve FF has flow rate=0; tunnels lead to valves EE, GG
-            Valve GG has flow rate=0; tunnels lead to valves FF, HH
-            Valve HH has flow rate=22; tunnel leads to valve GG
-            Valve II has flow rate=0; tunnels lead to valves AA, JJ
-            Valve JJ has flow rate=21; tunnel leads to valve II
-            ";
+        let input = "Valve AA has flow rate=0; tunnels lead to valves DD, II, BB
+Valve BB has flow rate=13; tunnels lead to valves CC, AA
+Valve CC has flow rate=2; tunnels lead to valves DD, BB
+Valve DD has flow rate=20; tunnels lead to valves CC, AA, EE
+Valve EE has flow rate=3; tunnels lead to valves FF, DD
+Valve FF has flow rate=0; tunnels lead to valves EE, GG
+Valve GG has flow rate=0; tunnels lead to valves FF, HH
+Valve HH has flow rate=22; tunnel leads to valve GG
+Valve II has flow rate=0; tunnels lead to valves AA, JJ
+Valve JJ has flow rate=21; tunnel leads to valve II";
         let solution = ProboscideaVolcanium::solve(input).unwrap();
         assert_eq!(solution, Solution::new(1651, 1707));
     }
