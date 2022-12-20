@@ -10,6 +10,7 @@ use distress_signal::DistressSignal;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
+use not_enough_minerals::NotEnoughMinerals;
 use proboscidea_volcanium::ProboscideaVolcanium;
 use pyroclastic_flow::PyroclasticFlow;
 use regolith_reservoir::RegolithReservoir;
@@ -149,6 +150,13 @@ aoc_benches! {
         day_018,
         "../day-018-boiling-boulders/input.txt",
         BoilingBoulders,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_019,
+        "../day-019-not-enough-minerals/input.txt",
+        NotEnoughMinerals,
         "Part 1",
         "Part 2"
     ),

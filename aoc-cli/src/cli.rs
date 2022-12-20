@@ -16,6 +16,7 @@ use distress_signal::DistressSignal;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
+use not_enough_minerals::NotEnoughMinerals;
 use proboscidea_volcanium::ProboscideaVolcanium;
 use pyroclastic_flow::PyroclasticFlow;
 use regolith_reservoir::RegolithReservoir;
@@ -174,5 +175,6 @@ generate_cli! {
     (ProboscideaVolcanium, 16),
     (PyroclasticFlow, 17),
     (BoilingBoulders, 18),
+    (NotEnoughMinerals, 19),
     // command_marker
 }

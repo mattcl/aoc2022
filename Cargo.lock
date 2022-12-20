@@ -28,6 +28,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "not-enough-minerals",
  "proboscidea-volcanium",
  "pyroclastic-flow",
  "regolith-reservoir",
@@ -54,6 +55,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "not-enough-minerals",
  "proboscidea-volcanium",
  "pyroclastic-flow",
  "regolith-reservoir",
@@ -82,6 +84,7 @@ dependencies = [
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
  "no-space-left-on-device",
+ "not-enough-minerals",
  "proboscidea-volcanium",
  "pyroclastic-flow",
  "regolith-reservoir",
@@ -617,6 +620,19 @@ checksum = "a8903e5a29a317527874d0402f867152a3d21c908bb0b933e416c65e301d4c36"
 dependencies = [
  "memchr",
  "minimal-lexical",
+]
+
+[[package]]
+name = "not-enough-minerals"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rayon",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]
