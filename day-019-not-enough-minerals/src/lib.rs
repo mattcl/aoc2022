@@ -340,8 +340,8 @@ impl Blueprint {
         // to maybe cut out some cycles
         let mut can_afford = 0u8;
 
-        if state.skipped & Obsidian::BIT == 0
-            && self.obsidian.can_afford(&state.inventory)
+        if self.obsidian.can_afford(&state.inventory)
+            && state.skipped & Obsidian::BIT == 0
             && state.population[2] < limits.obsidian
         {
             can_afford |= Obsidian::BIT;
@@ -351,8 +351,8 @@ impl Blueprint {
             self.search(&next_state, &limits, best);
         }
 
-        if state.skipped & Clay::BIT == 0
-            && self.clay.can_afford(&state.inventory)
+        if self.clay.can_afford(&state.inventory)
+            && state.skipped & Clay::BIT == 0
             && state.population[1] < limits.clay
         {
             can_afford |= Clay::BIT;
@@ -362,8 +362,8 @@ impl Blueprint {
             self.search(&next_state, &limits, best);
         }
 
-        if state.skipped & Ore::BIT == 0
-            && self.ore.can_afford(&state.inventory)
+        if self.ore.can_afford(&state.inventory)
+            && state.skipped & Ore::BIT == 0
             && state.population[0] < limits.ore
         {
             can_afford |= Ore::BIT;
