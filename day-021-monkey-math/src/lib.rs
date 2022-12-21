@@ -3,16 +3,20 @@
 //! more difficult to solve. I verified with my input that this assumption holds
 //! and I'm going to assume it has to hold for all inputs (or it may have ended
 //! up being wildly unfair).
-use std::{str::FromStr, ops::{Add, Sub, Mul, Div}};
+use std::{
+    ops::{Add, Div, Mul, Sub},
+    str::FromStr,
+};
 
 use anyhow::{anyhow, bail};
 use aoc_plumbing::Problem;
 use nom::{
-    IResult,
     branch::alt,
     bytes::complete::tag,
-    character::complete::{i64 as nom_i64, alpha1, newline},
-    sequence::separated_pair, multi::separated_list1
+    character::complete::{alpha1, i64 as nom_i64, newline},
+    multi::separated_list1,
+    sequence::separated_pair,
+    IResult,
 };
 use rustc_hash::FxHashMap;
 
@@ -28,98 +32,66 @@ pub enum Op {
 impl Op {
     pub fn undo(&self, target: i64) -> Result<i64, anyhow::Error> {
         match self {
-            Self::Sum { left, right } => {
-                match left {
-                    Value::Var => {
-                        match right {
-                            Value::Num { value } => Ok(target - value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Expr { op } => {
-                        match right {
-                            Value::Num { value } => op.undo(target - value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Num { value } => {
-                        match right {
-                            Value::Var => Ok(target - value),
-                            Value::Expr { op } => op.undo(target - value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                }
-            }
-            Self::Sub { left, right } => {
-                match left {
-                    Value::Var => {
-                        match right {
-                            Value::Num { value } => Ok(target + value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Expr { op } => {
-                        match right {
-                            Value::Num { value } => op.undo(target + value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Num { value } => {
-                        match right {
-                            Value::Var => Ok(value - target),
-                            Value::Expr { op } => op.undo(value - target),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                }
-            }
-            Self::Mul { left, right } => {
-                match left {
-                    Value::Var => {
-                        match right {
-                            Value::Num { value } => Ok(target / value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Expr { op } => {
-                        match right {
-                            Value::Num { value } => op.undo(target / value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Num { value } => {
-                        match right {
-                            Value::Var => Ok(target / value),
-                            Value::Expr { op } => op.undo(target / value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                }
-            }
-            Self::Div { left, right } => {
-                match left {
-                    Value::Var => {
-                        match right {
-                            Value::Num { value } => Ok(target * value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Expr { op } => {
-                        match right {
-                            Value::Num { value } => op.undo(target * value),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                    Value::Num { value } => {
-                        match right {
-                            Value::Var => Ok(value / target),
-                            Value::Expr { op } => op.undo(value / target),
-                            _ => bail!("Invalid undo operation: {:?}", &self)
-                        }
-                    }
-                }
-            }
+            Self::Sum { left, right } => match left {
+                Value::Var => match right {
+                    Value::Num { value } => Ok(target - value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Expr { op } => match right {
+                    Value::Num { value } => op.undo(target - value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Num { value } => match right {
+                    Value::Var => Ok(target - value),
+                    Value::Expr { op } => op.undo(target - value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+            },
+            Self::Sub { left, right } => match left {
+                Value::Var => match right {
+                    Value::Num { value } => Ok(target + value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Expr { op } => match right {
+                    Value::Num { value } => op.undo(target + value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Num { value } => match right {
+                    Value::Var => Ok(value - target),
+                    Value::Expr { op } => op.undo(value - target),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+            },
+            Self::Mul { left, right } => match left {
+                Value::Var => match right {
+                    Value::Num { value } => Ok(target / value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Expr { op } => match right {
+                    Value::Num { value } => op.undo(target / value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Num { value } => match right {
+                    Value::Var => Ok(target / value),
+                    Value::Expr { op } => op.undo(target / value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+            },
+            Self::Div { left, right } => match left {
+                Value::Var => match right {
+                    Value::Num { value } => Ok(target * value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Expr { op } => match right {
+                    Value::Num { value } => op.undo(target * value),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+                Value::Num { value } => match right {
+                    Value::Var => Ok(value / target),
+                    Value::Expr { op } => op.undo(value / target),
+                    _ => bail!("Invalid undo operation: {:?}", &self),
+                },
+            },
         }
     }
 }
@@ -135,15 +107,15 @@ pub enum Value {
 impl Value {
     pub fn get_value(&self) -> Result<i64, anyhow::Error> {
         match self {
-            Self::Num { value }  => Ok(*value),
-            _ => bail!("help")
+            Self::Num { value } => Ok(*value),
+            _ => bail!("help"),
         }
     }
 
     pub fn solve(&self, target: i64) -> Result<i64, anyhow::Error> {
         match self {
             Self::Expr { op } => op.undo(target),
-            _ => bail!("Cannot call solve on anything but an expression")
+            _ => bail!("Cannot call solve on anything but an expression"),
         }
     }
 }
@@ -153,27 +125,45 @@ impl Add<Value> for Value {
 
     fn add(self, rhs: Value) -> Self::Output {
         match self {
-            Value::Num { value: mine } => {
-                match rhs {
-                    Value::Num { value: their } => Value::Num { value: mine + their },
-                    Value::Var => Value::Expr { op: Box::new(Op::Sum { left: self, right: rhs }) },
-                    Value::Expr { .. } => Value::Expr { op: Box::new(Op::Sum { left: self, right: rhs }) },
-                }
-            }
-            Value::Var => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Sum { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression and var on two sides of an operation"),
-                    Value::Var => unreachable!("Found var on two sides of an operation")
-                }
+            Value::Num { value: mine } => match rhs {
+                Value::Num { value: their } => Value::Num {
+                    value: mine + their,
+                },
+                Value::Var => Value::Expr {
+                    op: Box::new(Op::Sum {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => Value::Expr {
+                    op: Box::new(Op::Sum {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
             },
-            Value::Expr { .. } => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Sum { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                    Value::Var => unreachable!("Found expression and var on two sides of an operation")
+            Value::Var => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Sum {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => {
+                    unreachable!("Found expression and var on two sides of an operation")
                 }
-            }
+                Value::Var => unreachable!("Found var on two sides of an operation"),
+            },
+            Value::Expr { .. } => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Sum {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
+                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            },
         }
     }
 }
@@ -183,27 +173,45 @@ impl Sub<Value> for Value {
 
     fn sub(self, rhs: Value) -> Self::Output {
         match self {
-            Value::Num { value: mine } => {
-                match rhs {
-                    Value::Num { value: their } => Value::Num { value: mine - their },
-                    Value::Var => Value::Expr { op: Box::new(Op::Sub { left: self, right: rhs }) },
-                    Value::Expr { .. } => Value::Expr { op: Box::new(Op::Sub { left: self, right: rhs }) },
-                }
-            }
-            Value::Var => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Sub { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression and var on two sides of an operation"),
-                    Value::Var => unreachable!("Found var on two sides of an operation")
-                }
+            Value::Num { value: mine } => match rhs {
+                Value::Num { value: their } => Value::Num {
+                    value: mine - their,
+                },
+                Value::Var => Value::Expr {
+                    op: Box::new(Op::Sub {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => Value::Expr {
+                    op: Box::new(Op::Sub {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
             },
-            Value::Expr { .. } => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Sub { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                    Value::Var => unreachable!("Found expression and var on two sides of an operation")
+            Value::Var => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Sub {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => {
+                    unreachable!("Found expression and var on two sides of an operation")
                 }
-            }
+                Value::Var => unreachable!("Found var on two sides of an operation"),
+            },
+            Value::Expr { .. } => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Sub {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
+                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            },
         }
     }
 }
@@ -213,27 +221,45 @@ impl Mul<Value> for Value {
 
     fn mul(self, rhs: Value) -> Self::Output {
         match self {
-            Value::Num { value: mine } => {
-                match rhs {
-                    Value::Num { value: their } => Value::Num { value: mine * their },
-                    Value::Var => Value::Expr { op: Box::new(Op::Mul { left: self, right: rhs }) },
-                    Value::Expr { .. } => Value::Expr { op: Box::new(Op::Mul { left: self, right: rhs }) },
-                }
-            }
-            Value::Var => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Mul { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression and var on two sides of an operation"),
-                    Value::Var => unreachable!("Found var on two sides of an operation")
-                }
+            Value::Num { value: mine } => match rhs {
+                Value::Num { value: their } => Value::Num {
+                    value: mine * their,
+                },
+                Value::Var => Value::Expr {
+                    op: Box::new(Op::Mul {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => Value::Expr {
+                    op: Box::new(Op::Mul {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
             },
-            Value::Expr { .. } => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Mul { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                    Value::Var => unreachable!("Found expression and var on two sides of an operation")
+            Value::Var => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Mul {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => {
+                    unreachable!("Found expression and var on two sides of an operation")
                 }
-            }
+                Value::Var => unreachable!("Found var on two sides of an operation"),
+            },
+            Value::Expr { .. } => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Mul {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
+                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            },
         }
     }
 }
@@ -243,196 +269,302 @@ impl Div<Value> for Value {
 
     fn div(self, rhs: Value) -> Self::Output {
         match self {
-            Value::Num { value: mine } => {
-                match rhs {
-                    Value::Num { value: their } => Value::Num { value: mine / their },
-                    Value::Var => Value::Expr { op: Box::new(Op::Div { left: self, right: rhs }) },
-                    Value::Expr { .. } => Value::Expr { op: Box::new(Op::Div { left: self, right: rhs }) },
-                }
-            }
-            Value::Var => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Div { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression and var on two sides of an operation"),
-                    Value::Var => unreachable!("Found var on two sides of an operation")
-                }
+            Value::Num { value: mine } => match rhs {
+                Value::Num { value: their } => Value::Num {
+                    value: mine / their,
+                },
+                Value::Var => Value::Expr {
+                    op: Box::new(Op::Div {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => Value::Expr {
+                    op: Box::new(Op::Div {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
             },
-            Value::Expr { .. } => {
-                match rhs {
-                    Value::Num { .. } => Value::Expr { op: Box::new(Op::Div { left: self, right: rhs }) },
-                    Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                    Value::Var => unreachable!("Found expression and var on two sides of an operation")
+            Value::Var => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Div {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => {
+                    unreachable!("Found expression and var on two sides of an operation")
                 }
-            }
+                Value::Var => unreachable!("Found var on two sides of an operation"),
+            },
+            Value::Expr { .. } => match rhs {
+                Value::Num { .. } => Value::Expr {
+                    op: Box::new(Op::Div {
+                        left: self,
+                        right: rhs,
+                    }),
+                },
+                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
+                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            },
         }
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+// So having these "raw" versions works around the limitation in the Problem
+// trait not having lifetime support, by first storing &str then converting
+// later. We're going to convert to int indicies of course, since that'll cut
+// down on potential hash lookup time.
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub enum RawJob<'a> {
+    Sum { left: &'a str, right: &'a str },
+    Sub { left: &'a str, right: &'a str },
+    Mul { left: &'a str, right: &'a str },
+    Div { left: &'a str, right: &'a str },
+    Yell { value: i64 },
+}
+
+impl<'a> RawJob<'a> {
+    pub fn to_job(&self, name_hash: &FxHashMap<&str, usize>) -> Result<Job, anyhow::Error> {
+        let j = match self {
+            Self::Sum { left, right } => Job::Sum {
+                left: *name_hash
+                    .get(left)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", left))?,
+                right: *name_hash
+                    .get(right)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", right))?,
+            },
+            Self::Sub { left, right } => Job::Sub {
+                left: *name_hash
+                    .get(left)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", left))?,
+                right: *name_hash
+                    .get(right)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", right))?,
+            },
+            Self::Mul { left, right } => Job::Mul {
+                left: *name_hash
+                    .get(left)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", left))?,
+                right: *name_hash
+                    .get(right)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", right))?,
+            },
+            Self::Div { left, right } => Job::Div {
+                left: *name_hash
+                    .get(left)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", left))?,
+                right: *name_hash
+                    .get(right)
+                    .ok_or_else(|| anyhow!("missing monkey: {}", right))?,
+            },
+            Self::Yell { value } => Job::Yell { value: *value },
+        };
+
+        Ok(j)
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Job {
-    Sum { left: String, right: String },
-    Sub { left: String, right: String },
-    Mul { left: String, right: String },
-    Div { left: String, right: String },
+    Sum { left: usize, right: usize },
+    Sub { left: usize, right: usize },
+    Mul { left: usize, right: usize },
+    Div { left: usize, right: usize },
     Yell { value: i64 },
 }
 
 impl Job {
     /// So this is a direct solve without the extra `Value` overhead
-    pub fn output(&self, monkeys: &FxHashMap<String, Monkey>, cache: &mut FxHashMap<String, i64>) -> Result<i64, anyhow::Error> {
+    pub fn output(&self, monkeys: &[Monkey]) -> Result<i64, anyhow::Error> {
         match self {
             Self::Sum { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.output(monkeys, cache)? + r.output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.output(monkeys)? + r.output(monkeys)?)
             }
             Self::Sub { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.output(monkeys, cache)? - r.output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.output(monkeys)? - r.output(monkeys)?)
             }
             Self::Mul { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.output(monkeys, cache)? * r.output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.output(monkeys)? * r.output(monkeys)?)
             }
             Self::Div { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.output(monkeys, cache)? / r.output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.output(monkeys)? / r.output(monkeys)?)
             }
             Self::Yell { value } => Ok(*value),
         }
     }
 
-    /// So this pays the `Value` penalty to allow the solver to work.
-    pub fn value_output(&self, monkeys: &FxHashMap<String, Monkey>, cache: &mut FxHashMap<String, Value>) -> Result<Value, anyhow::Error> {
+    /// This pays the `Value` penalty to allow the solver to work.
+    pub fn value_output(
+        &self,
+        human_id: usize,
+        monkeys: &[Monkey],
+    ) -> Result<Value, anyhow::Error> {
         match self {
             Self::Sum { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(monkeys, cache)? + r.value_output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.value_output(human_id, monkeys)? + r.value_output(human_id, monkeys)?)
             }
             Self::Sub { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(monkeys, cache)? - r.value_output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.value_output(human_id, monkeys)? - r.value_output(human_id, monkeys)?)
             }
             Self::Mul { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(monkeys, cache)? * r.value_output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.value_output(human_id, monkeys)? * r.value_output(human_id, monkeys)?)
             }
             Self::Div { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(monkeys, cache)? / r.value_output(monkeys, cache)?)
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
+                Ok(l.value_output(human_id, monkeys)? / r.value_output(human_id, monkeys)?)
             }
             Self::Yell { value } => Ok(Value::Num { value: *value }),
         }
     }
 }
 
-fn parse_sum(input: &str) -> IResult<&str, Job> {
-    let (input, (left, right)) = separated_pair(alpha1, tag(" + ") , alpha1)(input)?;
-    Ok((input, Job::Sum { left: left.into(), right: right.into() }))
+fn parse_sum<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
+    let (input, (left, right)) = separated_pair(alpha1, tag(" + "), alpha1)(input)?;
+    Ok((input, RawJob::Sum { left, right }))
 }
 
-fn parse_sub(input: &str) -> IResult<&str, Job> {
-    let (input, (left, right)) = separated_pair(alpha1, tag(" - ") , alpha1)(input)?;
-    Ok((input, Job::Sub { left: left.into(), right: right.into() }))
+fn parse_sub<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
+    let (input, (left, right)) = separated_pair(alpha1, tag(" - "), alpha1)(input)?;
+    Ok((input, RawJob::Sub { left, right }))
 }
 
-fn parse_mul(input: &str) -> IResult<&str, Job> {
-    let (input, (left, right)) = separated_pair(alpha1, tag(" * ") , alpha1)(input)?;
-    Ok((input, Job::Mul { left: left.into(), right: right.into() }))
+fn parse_mul<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
+    let (input, (left, right)) = separated_pair(alpha1, tag(" * "), alpha1)(input)?;
+    Ok((input, RawJob::Mul { left, right }))
 }
 
-fn parse_div(input: &str) -> IResult<&str, Job> {
-    let (input, (left, right)) = separated_pair(alpha1, tag(" / ") , alpha1)(input)?;
-    Ok((input, Job::Div { left: left.into(), right: right.into() }))
+fn parse_div<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
+    let (input, (left, right)) = separated_pair(alpha1, tag(" / "), alpha1)(input)?;
+    Ok((input, RawJob::Div { left, right }))
 }
 
-fn parse_yell(input: &str) -> IResult<&str, Job> {
+fn parse_yell<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
     let (input, value) = nom_i64(input)?;
-    Ok((input, Job::Yell { value }))
+    Ok((input, RawJob::Yell { value }))
 }
 
-fn parse_job(input: &str) -> IResult<&str, Job> {
+fn parse_job<'a>(input: &'a str) -> IResult<&'a str, RawJob<'a>> {
     alt((parse_sum, parse_sub, parse_mul, parse_div, parse_yell))(input)
 }
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct RawMonkey<'a> {
+    name: &'a str,
+    job: RawJob<'a>,
+}
+
+fn parse_monkey<'a>(input: &'a str) -> IResult<&'a str, RawMonkey<'a>> {
+    let (input, (name, job)) = separated_pair(alpha1, tag(": "), parse_job)(input)?;
+    Ok((input, RawMonkey { name, job }))
+}
+
+fn parse_monkeys<'a>(input: &'a str) -> IResult<&'a str, Vec<RawMonkey<'a>>> {
+    separated_list1(newline, parse_monkey)(input)
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Monkey {
-    name: String,
+    id: usize,
     job: Job,
 }
 
 impl Monkey {
-    pub fn output(&self, monkeys: &FxHashMap<String, Monkey>, cache: &mut FxHashMap<String, i64>) -> Result<i64, anyhow::Error> {
-        if let Some(value) = cache.get(&self.name) {
-            return Ok(*value);
-        }
-
-        let value = self.job.output(monkeys, cache)?;
-
-        cache.insert(self.name.clone(), value);
-
-        Ok(value)
+    // So these recursive functions did have caches, before, but it turns out
+    // that my input never had cache hits. The caches were removed for
+    // performance reasons
+    pub fn output(&self, monkeys: &[Monkey]) -> Result<i64, anyhow::Error> {
+        self.job.output(monkeys)
     }
 
-    pub fn value_output(&self, monkeys: &FxHashMap<String, Monkey>, cache: &mut FxHashMap<String, Value>) -> Result<Value, anyhow::Error> {
-        if &self.name == "humn" {
+    pub fn value_output(
+        &self,
+        human_id: usize,
+        monkeys: &[Monkey],
+    ) -> Result<Value, anyhow::Error> {
+        if self.id == human_id {
             return Ok(Value::Var);
         }
 
-        if let Some(value) = cache.get(&self.name) {
-            return Ok(value.clone());
-        }
-
-        let value = self.job.value_output(monkeys, cache)?;
-
-        cache.insert(self.name.clone(), value.clone());
-
-        Ok(value)
+        self.job.value_output(human_id, monkeys)
     }
 
-    pub fn depends_on_human(&self, monkeys: &FxHashMap<String, Monkey>) -> Result<bool, anyhow::Error> {
-        if &self.name == "humn" {
-            return Ok(true);
-        }
-
-        if let Ok((left, right)) = self.left_and_right(monkeys) {
-            Ok(left.depends_on_human(monkeys)? || right.depends_on_human(monkeys)?)
-        } else {
-            Ok(false)
-        }
-    }
-
-    pub fn left_and_right<'a>(&self, monkeys: &'a FxHashMap<String, Monkey>) -> Result<(&'a Monkey, &'a Monkey), anyhow::Error> {
+    pub fn left_and_right<'a>(
+        &self,
+        monkeys: &'a [Monkey],
+    ) -> Result<(&'a Monkey, &'a Monkey), anyhow::Error> {
         match &self.job {
             Job::Yell { .. } => bail!("cannot get left and right on Yell"),
-            Job::Sum { left, right } | Job::Sub { left, right } | Job::Mul { left, right } | Job::Div { left, right } => {
-                let l = monkeys.get(left).ok_or_else(|| anyhow!("unknown monkey: {}", left))?;
-                let r = monkeys.get(right).ok_or_else(|| anyhow!("unknown monkey: {}", right))?;
+            Job::Sum { left, right }
+            | Job::Sub { left, right }
+            | Job::Mul { left, right }
+            | Job::Div { left, right } => {
+                let l = monkeys
+                    .get(*left)
+                    .ok_or_else(|| anyhow!("unknown monkey: {}", left))?;
+                let r = monkeys
+                    .get(*right)
+                    .ok_or_else(|| anyhow!("unknown monkey: {}", right))?;
                 Ok((l, r))
             }
         }
     }
 }
 
-fn parse_monkey(input: &str) -> IResult<&str, Monkey> {
-    let (input, (name, job)) = separated_pair(alpha1, tag(": "), parse_job)(input)?;
-    Ok((input, Monkey { name: name.into(), job }))
-}
-
-fn parse_monkeys(input: &str) -> IResult<&str, Vec<Monkey>> {
-    separated_list1(newline, parse_monkey)(input)
-}
-
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MonkeyMath {
-    monkeys: FxHashMap<String, Monkey>,
+    monkeys: Vec<Monkey>,
+    root_id: usize,
+    human_id: usize,
 }
 
 impl FromStr for MonkeyMath {
@@ -441,17 +573,38 @@ impl FromStr for MonkeyMath {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let (_, raw_monkeys) = parse_monkeys(s).map_err(|e| e.to_owned())?;
 
-        let mut monkeys = FxHashMap::with_capacity_and_hasher(raw_monkeys.len(), Default::default());
+        // this seems like some nonsense, but it's a huge later on savings to
+        // not have to deal with strings and looking those up from hashes
+        let mut monkeys = Vec::with_capacity(raw_monkeys.len());
+        let mut monkey_name_hash: FxHashMap<&str, usize> =
+            FxHashMap::with_capacity_and_hasher(raw_monkeys.len(), Default::default());
 
-        for monkey in raw_monkeys {
-            monkeys.insert(monkey.name.clone(), monkey);
+        let mut count = 0;
+        for m in raw_monkeys.iter() {
+            monkey_name_hash.insert(m.name, count);
+            count += 1;
         }
 
-        Ok(
-            Self {
-                monkeys
-            }
-        )
+        let root_id = *monkey_name_hash
+            .get("root")
+            .ok_or_else(|| anyhow!("no root monkey"))?;
+        let human_id = *monkey_name_hash
+            .get("humn")
+            .ok_or_else(|| anyhow!("no human"))?;
+
+        for m in raw_monkeys {
+            let monkey = Monkey {
+                id: monkeys.len(),
+                job: m.job.to_job(&monkey_name_hash)?,
+            };
+            monkeys.push(monkey);
+        }
+
+        Ok(Self {
+            monkeys,
+            root_id,
+            human_id,
+        })
     }
 }
 
@@ -465,22 +618,25 @@ impl Problem for MonkeyMath {
     type P2 = i64;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        let mut cache = FxHashMap::with_capacity_and_hasher(self.monkeys.len(), Default::default());
-        let root = self.monkeys.get("root").ok_or_else(|| anyhow!("no monkey named root"))?;
-        root.output(&self.monkeys, &mut cache)
+        let root = self
+            .monkeys
+            .get(self.root_id)
+            .ok_or_else(|| anyhow!("no monkey named root"))?;
+        root.output(&self.monkeys)
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        let root = self.monkeys.get("root").ok_or_else(|| anyhow!("no monkey named root"))?;
+        let root = self
+            .monkeys
+            .get(self.root_id)
+            .ok_or_else(|| anyhow!("no monkey named root"))?;
 
         let (left, right) = root.left_and_right(&self.monkeys)?;
 
-        let mut cache = FxHashMap::with_capacity_and_hasher(self.monkeys.len(), Default::default());
-
         // we can compute each side independently without implementing == for
         // root
-        let l = left.value_output(&self.monkeys, &mut cache)?;
-        let r = right.value_output(&self.monkeys, &mut cache)?;
+        let l = left.value_output(self.human_id, &self.monkeys)?;
+        let r = right.value_output(self.human_id, &self.monkeys)?;
 
         // figure out which side is us and the actual value of the other side
         let (us, them) = {

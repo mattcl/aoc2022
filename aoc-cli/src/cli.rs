@@ -16,6 +16,7 @@ use distress_signal::DistressSignal;
 use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
+use monkey_math::MonkeyMath;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use not_enough_minerals::NotEnoughMinerals;
 use proboscidea_volcanium::ProboscideaVolcanium;
@@ -27,7 +28,6 @@ use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
-use monkey_math::MonkeyMath;
 // import_marker
 
 // I'm not proud
