@@ -27,6 +27,7 @@ use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
+use monkey_math::MonkeyMath;
 // import_marker
 
 // I'm not proud
@@ -178,5 +179,6 @@ generate_cli! {
     (BoilingBoulders, 18),
     (NotEnoughMinerals, 19),
     (GrovePositioningSystem, 20),
+    (MonkeyMath, 21),
     // command_marker
 }

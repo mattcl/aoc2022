@@ -21,6 +21,7 @@ use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
+use monkey_math::MonkeyMath;
 // import_marker
 
 criterion_main! {
@@ -165,6 +166,13 @@ aoc_benches! {
         day_020,
         "../day-020-grove-positioning-system/input.txt",
         GrovePositioningSystem,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_021,
+        "../day-021-monkey-math/input.txt",
+        MonkeyMath,
         "Part 1",
         "Part 2"
     ),
