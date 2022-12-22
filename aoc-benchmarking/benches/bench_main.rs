@@ -10,6 +10,7 @@ use distress_signal::DistressSignal;
 use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
+use monkey_map::MonkeyMap;
 use monkey_math::MonkeyMath;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use not_enough_minerals::NotEnoughMinerals;
@@ -173,6 +174,13 @@ aoc_benches! {
         day_021,
         "../day-021-monkey-math/input.txt",
         MonkeyMath,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_022,
+        "../day-022-monkey-map/input.txt",
+        MonkeyMap,
         "Part 1",
         "Part 2"
     ),

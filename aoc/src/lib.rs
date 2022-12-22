@@ -11,6 +11,7 @@ pub use distress_signal::DistressSignal;
 pub use grove_positioning_system::GrovePositioningSystem;
 pub use hill_climbing_algorithm::HillClimbingAlgorithm;
 pub use monkey_in_the_middle::MonkeyInTheMiddle;
+pub use monkey_map::MonkeyMap;
 pub use monkey_math::MonkeyMath;
 pub use no_space_left_on_device::NoSpaceLeftOnDevice;
 pub use not_enough_minerals::NotEnoughMinerals;

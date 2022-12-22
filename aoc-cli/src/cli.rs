@@ -16,6 +16,7 @@ use distress_signal::DistressSignal;
 use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
+use monkey_map::MonkeyMap;
 use monkey_math::MonkeyMath;
 use no_space_left_on_device::NoSpaceLeftOnDevice;
 use not_enough_minerals::NotEnoughMinerals;
@@ -180,5 +181,6 @@ generate_cli! {
     (NotEnoughMinerals, 19),
     (GrovePositioningSystem, 20),
     (MonkeyMath, 21),
+    (MonkeyMap, 22),
     // command_marker
 }
