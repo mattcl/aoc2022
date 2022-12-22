@@ -196,6 +196,29 @@ impl<const N: usize> CubePerson<N> {
     }
 }
 
+/// So we're going to assume every input has the following layout
+///
+/// ```text
+///      ___ ___
+///     |   |   |
+///     | 2 | 1 |
+///     |___|___|
+///     |   |
+///     | 3 |
+///  ___|___|
+/// |   |   |
+/// | 5 | 4 |
+/// |___|___|
+/// |   |
+/// | 6 |
+/// |___|
+/// ```
+///
+/// In which case the Region enum provides a way to wrap and translate locations
+/// from one region to another in the contet of our single 2D grid. It also
+/// provides for discovery of which region a global location is in. Most of this
+/// code makes hard assumptions about the user properly specifying `N`, the
+/// length of every cube edge.
 #[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub enum Region<const N: usize> {
     One,
