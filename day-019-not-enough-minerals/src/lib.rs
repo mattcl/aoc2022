@@ -91,6 +91,10 @@ impl Robot<Ore> {
     pub fn pay_for(&self, inventory: &mut [i64; 4]) {
         inventory[0] -= self.costs.ore;
     }
+
+    pub fn refund(&self, inventory: &mut [i64; 4]) {
+        inventory[0] += self.costs.ore;
+    }
 }
 
 impl Robot<Clay> {
@@ -110,6 +114,10 @@ impl Robot<Clay> {
 
     pub fn pay_for(&self, inventory: &mut [i64; 4]) {
         inventory[0] -= self.costs.ore;
+    }
+
+    pub fn refund(&self, inventory: &mut [i64; 4]) {
+        inventory[0] += self.costs.ore;
     }
 }
 
@@ -133,6 +141,11 @@ impl Robot<Obsidian> {
         inventory[0] -= self.costs.ore;
         inventory[1] -= self.costs.clay;
     }
+
+    pub fn refund(&self, inventory: &mut [i64; 4]) {
+        inventory[0] += self.costs.ore;
+        inventory[1] += self.costs.clay;
+    }
 }
 
 impl Robot<Geode> {
@@ -154,6 +167,11 @@ impl Robot<Geode> {
     pub fn pay_for(&self, inventory: &mut [i64; 4]) {
         inventory[0] -= self.costs.ore;
         inventory[2] -= self.costs.obsidian;
+    }
+
+    pub fn refund(&self, inventory: &mut [i64; 4]) {
+        inventory[0] += self.costs.ore;
+        inventory[2] += self.costs.obsidian;
     }
 }
 
@@ -215,7 +233,6 @@ pub struct State {
     time_remaining: i64,
     population: [i64; 4],
     inventory: [i64; 4],
-    skipped: u8,
 }
 
 impl Default for State {
@@ -224,7 +241,6 @@ impl Default for State {
             time_remaining: 0,
             population: [1, 0, 0, 0],
             inventory: [0; 4],
-            skipped: 0,
         }
     }
 }
@@ -257,11 +273,9 @@ impl State {
     pub fn next(&self) -> Self {
         let mut next = *self;
         next.time_remaining -= 1;
-        next.skipped = 0;
-        next.inventory[0] += next.population[0];
-        next.inventory[1] += next.population[1];
-        next.inventory[2] += next.population[2];
-        next.inventory[3] += next.population[3];
+        for i in 0..4 {
+            next.inventory[i] += next.population[i];
+        }
         next
     }
 }
@@ -302,11 +316,11 @@ impl Blueprint {
 
         let mut best = 0;
 
-        self.search(&state, &limits, &mut best);
+        self.search(&state, &limits, 0, &mut best);
         best
     }
 
-    pub fn search(&self, state: &State, limits: &Limits, best: &mut i64) {
+    pub fn search(&self, state: &State, limits: &Limits, skipped: u8, best: &mut i64) {
         if state.time_remaining <= 1 {
             let geodes = state.geodes_with_remaining_time();
             if geodes > *best {
@@ -333,50 +347,51 @@ impl Blueprint {
         if self.geode.can_afford(&state.inventory) {
             self.geode.pay_for(&mut next_state.inventory);
             next_state.population[3] += 1;
-            return self.search(&next_state, &limits, best);
+            return self.search(&next_state, &limits, 0, best);
         }
 
         // try to build any other robots. We're going to try in reverse order
         // to maybe cut out some cycles
         let mut can_afford = 0u8;
 
-        if self.obsidian.can_afford(&state.inventory)
-            && state.skipped & Obsidian::BIT == 0
-            && state.population[2] < limits.obsidian
-        {
-            can_afford |= Obsidian::BIT;
-            let mut next_state = next_state;
-            self.obsidian.pay_for(&mut next_state.inventory);
-            next_state.population[2] += 1;
-            self.search(&next_state, &limits, best);
-        }
-
-        if self.clay.can_afford(&state.inventory)
-            && state.skipped & Clay::BIT == 0
-            && state.population[1] < limits.clay
-        {
-            can_afford |= Clay::BIT;
-            let mut next_state = next_state;
-            self.clay.pay_for(&mut next_state.inventory);
-            next_state.population[1] += 1;
-            self.search(&next_state, &limits, best);
-        }
-
         if self.ore.can_afford(&state.inventory)
-            && state.skipped & Ore::BIT == 0
+            && skipped & Ore::BIT == 0
             && state.population[0] < limits.ore
         {
             can_afford |= Ore::BIT;
-            let mut next_state = next_state;
             self.ore.pay_for(&mut next_state.inventory);
             next_state.population[0] += 1;
-            self.search(&next_state, &limits, best);
+            self.search(&next_state, &limits, 0, best);
+            next_state.population[0] -= 1;
+            self.ore.refund(&mut next_state.inventory);
+        }
+
+        if self.clay.can_afford(&state.inventory)
+            && skipped & Clay::BIT == 0
+            && state.population[1] < limits.clay
+        {
+            can_afford |= Clay::BIT;
+            self.clay.pay_for(&mut next_state.inventory);
+            next_state.population[1] += 1;
+            self.search(&next_state, &limits, 0, best);
+            next_state.population[1] -= 1;
+            self.clay.refund(&mut next_state.inventory);
+        }
+        if self.obsidian.can_afford(&state.inventory)
+            && skipped & Obsidian::BIT == 0
+            && state.population[2] < limits.obsidian
+        {
+            can_afford |= Obsidian::BIT;
+            self.obsidian.pay_for(&mut next_state.inventory);
+            next_state.population[2] += 1;
+            self.search(&next_state, &limits, 0, best);
+            next_state.population[2] -= 1;
+            self.obsidian.refund(&mut next_state.inventory);
         }
 
         // now simulate not buying, but set the ones we skipped to the ones we
         // could have bought
-        next_state.skipped = can_afford;
-        self.search(&next_state, &limits, best);
+        self.search(&next_state, &limits, can_afford, best);
     }
 }
 

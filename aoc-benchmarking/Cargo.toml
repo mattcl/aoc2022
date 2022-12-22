@@ -12,7 +12,7 @@ harness = false
 par = ["distress-signal/par"]
 
 [dev-dependencies]
-criterion = "0.4.0"
+criterion = { version = "0.4.0", features = ["html_reports"] }
 
 [dependencies]
 aoc-plumbing = { path = "../aoc-plumbing" }
