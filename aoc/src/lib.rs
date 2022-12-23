@@ -24,4 +24,5 @@ pub use rucksack_reorganization::RucksackReorganization;
 pub use supply_stacks::SupplyStacks;
 pub use treetop_tree_house::TreetopTreeHouse;
 pub use tuning_trouble::TuningTrouble;
+pub use unstable_diffusion::UnstableDiffusion;
 // import_marker

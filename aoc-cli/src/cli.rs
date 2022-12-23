@@ -29,6 +29,7 @@ use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
+use unstable_diffusion::UnstableDiffusion;
 // import_marker
 
 // I'm not proud
@@ -182,5 +183,6 @@ generate_cli! {
     (GrovePositioningSystem, 20),
     (MonkeyMath, 21),
     (MonkeyMap, 22),
+    (UnstableDiffusion, 23),
     // command_marker
 }

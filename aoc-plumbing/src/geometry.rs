@@ -1,3 +1,5 @@
+use itertools::Itertools;
+
 /// A 2D Point of (i64, i64)
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Point {
@@ -26,6 +28,19 @@ impl Point {
     /// ```
     pub fn manhattan_distance(&self, other: &Self) -> i64 {
         (self.x - other.x).abs() + (self.y - other.y).abs()
+    }
+
+    pub fn neighbors(&self) -> impl Iterator<Item = Point> + '_ {
+        (-1..=1)
+            .cartesian_product(-1..=1)
+            .into_iter()
+            .filter_map(move |(x, y)| {
+                if x == 0 && y == 0 {
+                    None
+                } else {
+                    Some((self.x + x, self.y + y).into())
+                }
+            })
     }
 }
 

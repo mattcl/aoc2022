@@ -38,3 +38,4 @@ not-enough-minerals = { path = "../day-019-not-enough-minerals" }
 grove-positioning-system = { path = "../day-020-grove-positioning-system" }
 monkey-math = { path = "../day-021-monkey-math" }
 monkey-map = { path = "../day-022-monkey-map" }
+unstable-diffusion = { path = "../day-023-unstable-diffusion" }

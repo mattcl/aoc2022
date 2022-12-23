@@ -23,6 +23,7 @@ use rucksack_reorganization::RucksackReorganization;
 use supply_stacks::SupplyStacks;
 use treetop_tree_house::TreetopTreeHouse;
 use tuning_trouble::TuningTrouble;
+use unstable_diffusion::UnstableDiffusion;
 // import_marker
 
 criterion_main! {
@@ -181,6 +182,13 @@ aoc_benches! {
         day_022,
         "../day-022-monkey-map/input.txt",
         MonkeyMap,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_023,
+        "../day-023-unstable-diffusion/input.txt",
+        UnstableDiffusion,
         "Part 1",
         "Part 2"
     ),
