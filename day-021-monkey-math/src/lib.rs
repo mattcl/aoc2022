@@ -32,65 +32,33 @@ pub enum Op {
 impl Op {
     pub fn undo(&self, target: i64) -> Result<i64, anyhow::Error> {
         match self {
-            Self::Sum { left, right } => match left {
-                Value::Var => match right {
-                    Value::Num { value } => Ok(target - value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Expr { op } => match right {
-                    Value::Num { value } => op.undo(target - value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Num { value } => match right {
-                    Value::Var => Ok(target - value),
-                    Value::Expr { op } => op.undo(target - value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
+            Self::Sum { left, right } => match (left, right) {
+                (Value::Var, Value::Num { value }) => Ok(target - value),
+                (Value::Num { value }, Value::Var) => Ok(target - value),
+                (Value::Expr { op }, Value::Num { value }) => op.undo(target - value),
+                (Value::Num { value }, Value::Expr { op }) => op.undo(target - value),
+                _ => bail!("Invalid undo operation {:?}", &self),
             },
-            Self::Sub { left, right } => match left {
-                Value::Var => match right {
-                    Value::Num { value } => Ok(target + value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Expr { op } => match right {
-                    Value::Num { value } => op.undo(target + value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Num { value } => match right {
-                    Value::Var => Ok(value - target),
-                    Value::Expr { op } => op.undo(value - target),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
+            Self::Sub { left, right } => match (left, right) {
+                (Value::Var, Value::Num { value }) => Ok(target + value),
+                (Value::Num { value }, Value::Var) => Ok(value - target),
+                (Value::Expr { op }, Value::Num { value }) => op.undo(target + value),
+                (Value::Num { value }, Value::Expr { op }) => op.undo(value - target),
+                _ => bail!("Invalid undo operation {:?}", &self),
             },
-            Self::Mul { left, right } => match left {
-                Value::Var => match right {
-                    Value::Num { value } => Ok(target / value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Expr { op } => match right {
-                    Value::Num { value } => op.undo(target / value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Num { value } => match right {
-                    Value::Var => Ok(target / value),
-                    Value::Expr { op } => op.undo(target / value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
+            Self::Mul { left, right } => match (left, right) {
+                (Value::Var, Value::Num { value }) => Ok(target / value),
+                (Value::Num { value }, Value::Var) => Ok(value / target),
+                (Value::Expr { op }, Value::Num { value }) => op.undo(target / value),
+                (Value::Num { value }, Value::Expr { op }) => op.undo(target / value),
+                _ => bail!("Invalid undo operation {:?}", &self),
             },
-            Self::Div { left, right } => match left {
-                Value::Var => match right {
-                    Value::Num { value } => Ok(target * value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Expr { op } => match right {
-                    Value::Num { value } => op.undo(target * value),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
-                Value::Num { value } => match right {
-                    Value::Var => Ok(value / target),
-                    Value::Expr { op } => op.undo(value / target),
-                    _ => bail!("Invalid undo operation: {:?}", &self),
-                },
+            Self::Div { left, right } => match (left, right) {
+                (Value::Var, Value::Num { value }) => Ok(target * value),
+                (Value::Num { value }, Value::Var) => Ok(value / target),
+                (Value::Expr { op }, Value::Num { value }) => op.undo(target * value),
+                (Value::Num { value }, Value::Expr { op }) => op.undo(value / target),
+                _ => bail!("Invalid undo operation {:?}", &self),
             },
         }
     }
@@ -124,45 +92,21 @@ impl Add<Value> for Value {
     type Output = Value;
 
     fn add(self, rhs: Value) -> Self::Output {
-        match self {
-            Value::Num { value: mine } => match rhs {
-                Value::Num { value: their } => Value::Num {
-                    value: mine + their,
-                },
-                Value::Var => Value::Expr {
-                    op: Box::new(Op::Sum {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => Value::Expr {
-                    op: Box::new(Op::Sum {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
+        match (&self, &rhs) {
+            (Value::Num { value: left }, Value::Num { value: right }) => Value::Num {
+                value: left + right,
             },
-            Value::Var => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Sum {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => {
-                    unreachable!("Found expression and var on two sides of an operation")
-                }
-                Value::Var => unreachable!("Found var on two sides of an operation"),
-            },
-            Value::Expr { .. } => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Sum {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            (Value::Expr { .. }, Value::Var)
+            | (Value::Expr { .. }, Value::Expr { .. })
+            | (Value::Var, Value::Var)
+            | (Value::Var, Value::Expr { .. }) => {
+                unreachable!("Found expression and or var on two sides of an operation")
+            }
+            _ => Value::Expr {
+                op: Box::new(Op::Sum {
+                    left: self,
+                    right: rhs,
+                }),
             },
         }
     }
@@ -172,45 +116,21 @@ impl Sub<Value> for Value {
     type Output = Value;
 
     fn sub(self, rhs: Value) -> Self::Output {
-        match self {
-            Value::Num { value: mine } => match rhs {
-                Value::Num { value: their } => Value::Num {
-                    value: mine - their,
-                },
-                Value::Var => Value::Expr {
-                    op: Box::new(Op::Sub {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => Value::Expr {
-                    op: Box::new(Op::Sub {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
+        match (&self, &rhs) {
+            (Value::Num { value: left }, Value::Num { value: right }) => Value::Num {
+                value: left - right,
             },
-            Value::Var => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Sub {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => {
-                    unreachable!("Found expression and var on two sides of an operation")
-                }
-                Value::Var => unreachable!("Found var on two sides of an operation"),
-            },
-            Value::Expr { .. } => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Sub {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            (Value::Expr { .. }, Value::Var)
+            | (Value::Expr { .. }, Value::Expr { .. })
+            | (Value::Var, Value::Var)
+            | (Value::Var, Value::Expr { .. }) => {
+                unreachable!("Found expression and or var on two sides of an operation")
+            }
+            _ => Value::Expr {
+                op: Box::new(Op::Sub {
+                    left: self,
+                    right: rhs,
+                }),
             },
         }
     }
@@ -220,45 +140,21 @@ impl Mul<Value> for Value {
     type Output = Value;
 
     fn mul(self, rhs: Value) -> Self::Output {
-        match self {
-            Value::Num { value: mine } => match rhs {
-                Value::Num { value: their } => Value::Num {
-                    value: mine * their,
-                },
-                Value::Var => Value::Expr {
-                    op: Box::new(Op::Mul {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => Value::Expr {
-                    op: Box::new(Op::Mul {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
+        match (&self, &rhs) {
+            (Value::Num { value: left }, Value::Num { value: right }) => Value::Num {
+                value: left * right,
             },
-            Value::Var => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Mul {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => {
-                    unreachable!("Found expression and var on two sides of an operation")
-                }
-                Value::Var => unreachable!("Found var on two sides of an operation"),
-            },
-            Value::Expr { .. } => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Mul {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            (Value::Expr { .. }, Value::Var)
+            | (Value::Expr { .. }, Value::Expr { .. })
+            | (Value::Var, Value::Var)
+            | (Value::Var, Value::Expr { .. }) => {
+                unreachable!("Found expression and or var on two sides of an operation")
+            }
+            _ => Value::Expr {
+                op: Box::new(Op::Mul {
+                    left: self,
+                    right: rhs,
+                }),
             },
         }
     }
@@ -268,45 +164,21 @@ impl Div<Value> for Value {
     type Output = Value;
 
     fn div(self, rhs: Value) -> Self::Output {
-        match self {
-            Value::Num { value: mine } => match rhs {
-                Value::Num { value: their } => Value::Num {
-                    value: mine / their,
-                },
-                Value::Var => Value::Expr {
-                    op: Box::new(Op::Div {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => Value::Expr {
-                    op: Box::new(Op::Div {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
+        match (&self, &rhs) {
+            (Value::Num { value: left }, Value::Num { value: right }) => Value::Num {
+                value: left / right,
             },
-            Value::Var => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Div {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => {
-                    unreachable!("Found expression and var on two sides of an operation")
-                }
-                Value::Var => unreachable!("Found var on two sides of an operation"),
-            },
-            Value::Expr { .. } => match rhs {
-                Value::Num { .. } => Value::Expr {
-                    op: Box::new(Op::Div {
-                        left: self,
-                        right: rhs,
-                    }),
-                },
-                Value::Expr { .. } => unreachable!("Found expression on two sides of an operation"),
-                Value::Var => unreachable!("Found expression and var on two sides of an operation"),
+            (Value::Expr { .. }, Value::Var)
+            | (Value::Expr { .. }, Value::Expr { .. })
+            | (Value::Var, Value::Var)
+            | (Value::Var, Value::Expr { .. }) => {
+                unreachable!("Found expression and or var on two sides of an operation")
+            }
+            _ => Value::Expr {
+                op: Box::new(Op::Div {
+                    left: self,
+                    right: rhs,
+                }),
             },
         }
     }
@@ -374,6 +246,7 @@ pub enum Job {
     Mul { left: usize, right: usize },
     Div { left: usize, right: usize },
     Yell { value: i64 },
+    Human,
 }
 
 impl Job {
@@ -417,15 +290,12 @@ impl Job {
                 Ok(l.output(monkeys)? / r.output(monkeys)?)
             }
             Self::Yell { value } => Ok(*value),
+            Self::Human => bail!("Cannot solve with human unless using `value_output`"),
         }
     }
 
     /// This pays the `Value` penalty to allow the solver to work.
-    pub fn value_output(
-        &self,
-        human_id: usize,
-        monkeys: &[Monkey],
-    ) -> Result<Value, anyhow::Error> {
+    pub fn value_output(&self, monkeys: &[Monkey]) -> Result<Value, anyhow::Error> {
         match self {
             Self::Sum { left, right } => {
                 let l = monkeys
@@ -434,7 +304,7 @@ impl Job {
                 let r = monkeys
                     .get(*right)
                     .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(human_id, monkeys)? + r.value_output(human_id, monkeys)?)
+                Ok(l.value_output(monkeys)? + r.value_output(monkeys)?)
             }
             Self::Sub { left, right } => {
                 let l = monkeys
@@ -443,7 +313,7 @@ impl Job {
                 let r = monkeys
                     .get(*right)
                     .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(human_id, monkeys)? - r.value_output(human_id, monkeys)?)
+                Ok(l.value_output(monkeys)? - r.value_output(monkeys)?)
             }
             Self::Mul { left, right } => {
                 let l = monkeys
@@ -452,7 +322,7 @@ impl Job {
                 let r = monkeys
                     .get(*right)
                     .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(human_id, monkeys)? * r.value_output(human_id, monkeys)?)
+                Ok(l.value_output(monkeys)? * r.value_output(monkeys)?)
             }
             Self::Div { left, right } => {
                 let l = monkeys
@@ -461,9 +331,10 @@ impl Job {
                 let r = monkeys
                     .get(*right)
                     .ok_or_else(|| anyhow!("Unknown monkey: {}", left))?;
-                Ok(l.value_output(human_id, monkeys)? / r.value_output(human_id, monkeys)?)
+                Ok(l.value_output(monkeys)? / r.value_output(monkeys)?)
             }
             Self::Yell { value } => Ok(Value::Num { value: *value }),
+            Self::Human => Ok(Value::Var),
         }
     }
 }
@@ -526,16 +397,8 @@ impl Monkey {
         self.job.output(monkeys)
     }
 
-    pub fn value_output(
-        &self,
-        human_id: usize,
-        monkeys: &[Monkey],
-    ) -> Result<Value, anyhow::Error> {
-        if self.id == human_id {
-            return Ok(Value::Var);
-        }
-
-        self.job.value_output(human_id, monkeys)
+    pub fn value_output(&self, monkeys: &[Monkey]) -> Result<Value, anyhow::Error> {
+        self.job.value_output(monkeys)
     }
 
     pub fn left_and_right<'a>(
@@ -543,7 +406,7 @@ impl Monkey {
         monkeys: &'a [Monkey],
     ) -> Result<(&'a Monkey, &'a Monkey), anyhow::Error> {
         match &self.job {
-            Job::Yell { .. } => bail!("cannot get left and right on Yell"),
+            Job::Yell { .. } | Job::Human => bail!("cannot get left and right on Yell"),
             Job::Sum { left, right }
             | Job::Sub { left, right }
             | Job::Mul { left, right }
@@ -626,6 +489,7 @@ impl Problem for MonkeyMath {
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
+        self.monkeys[self.human_id].job = Job::Human;
         let root = self
             .monkeys
             .get(self.root_id)
@@ -635,8 +499,8 @@ impl Problem for MonkeyMath {
 
         // we can compute each side independently without implementing == for
         // root
-        let l = left.value_output(self.human_id, &self.monkeys)?;
-        let r = right.value_output(self.human_id, &self.monkeys)?;
+        let l = left.value_output(&self.monkeys)?;
+        let r = right.value_output(&self.monkeys)?;
 
         // figure out which side is us and the actual value of the other side
         let (us, them) = {
