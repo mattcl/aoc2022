@@ -197,7 +197,9 @@ impl UnstableDiffusion {
                     }
                 }
 
-                if found_neighbors == 0 {
+                // don't bother checking if we didn't find anyone or we're
+                // completely surrounded
+                if found_neighbors == 0 || found_neighbors == 0b11111111 {
                     continue;
                 }
 
