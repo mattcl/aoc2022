@@ -176,6 +176,7 @@ dependencies = [
  "aoc-plumbing",
  "aoc_helpers",
  "nom",
+ "num",
  "rustc-hash",
  "serde",
 ]

@@ -3,6 +3,7 @@ use std::{collections::BinaryHeap, fmt::Display, str::FromStr};
 use anyhow::{anyhow, bail};
 use aoc_helpers::generic::{prelude::GridLike, Grid, Location};
 use aoc_plumbing::Problem;
+use num::integer::lcm;
 use rustc_hash::FxHashMap;
 
 const NORTH: u8 = 0b1;
@@ -46,23 +47,10 @@ impl Display for Snapshot {
 }
 
 impl Snapshot {
-    pub fn from_initial_grid(initial_state: &Grid<Tile>, template: &Grid<Tile>) -> Self {
-        let mut next = template.clone();
-
-        for row in 0..initial_state.rows {
-            for col in 0..initial_state.cols {
-                match initial_state.locations[row][col] {
-                    Tile::Blizzard(v) => {
-                        Snapshot::adjust_blizzard(&Location::new(row, col), v, &mut next);
-                    }
-                    _ => {}
-                }
-            }
-        }
-
+    pub fn from_initial_grid(initial_state: &Grid<Tile>) -> Self {
         Self {
-            time: 1,
-            grid: next,
+            time: 0,
+            grid: initial_state.clone(),
         }
     }
 
@@ -175,24 +163,31 @@ impl Snapshot {
 
 /// The plan is to keep a timeline of grid states so that we don't have to
 /// recalculate these as we're searching different possibilities for different
-/// times.
+/// times. There's a cycle for the lcm of the width * height
 #[derive(Debug, Clone)]
 pub struct Timeline {
     snapshots: Vec<Snapshot>,
+    lcm: usize,
 }
 
 impl Timeline {
-    pub fn new(initial_state: &Grid<Tile>, template: &Grid<Tile>) -> Self {
+    pub fn new(initial_state: &Grid<Tile>) -> Self {
         let mut snapshots = Vec::new();
-        snapshots.push(Snapshot::from_initial_grid(initial_state, template));
+        snapshots.push(Snapshot::from_initial_grid(initial_state));
+        let lcm = lcm(initial_state.rows - 2, initial_state.cols - 2);
 
-        Self { snapshots }
+        Self { snapshots, lcm }
     }
 
     /// If we don't already have a snapshot for the specified minute, simulate
     /// from the snapshot we have to the specified minute.
     pub fn simulate_to(&mut self, minute: usize, template: &Grid<Tile>) {
-        for _ in self.snapshots.len()..minute {
+        // we have all the possible states
+        if self.snapshots.len() >= self.lcm {
+            return;
+        }
+
+        for _ in self.snapshots.len()..minute + 1 {
             let last = self.snapshots.last().unwrap();
             self.snapshots.push(last.next(template));
         }
@@ -200,7 +195,7 @@ impl Timeline {
 
     /// Get the snapshot for a given minute.
     pub fn get(&self, minute: usize) -> Option<&Snapshot> {
-        self.snapshots.get(minute - 1)
+        self.snapshots.get(minute % self.lcm)
     }
 }
 
@@ -405,12 +400,12 @@ impl Problem for BlizzardBasin {
     type P2 = usize;
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
-        let mut timeline = Timeline::new(&self.grid, &self.next_template);
+        let mut timeline = Timeline::new(&self.grid);
         self.best_time(0, &self.start, &self.end, &mut timeline)
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
-        let mut timeline = Timeline::new(&self.grid, &self.next_template);
+        let mut timeline = Timeline::new(&self.grid);
         let t = self.best_time(0, &self.start, &self.end, &mut timeline)?;
         let t2 = self.best_time(t, &self.end, &self.start, &mut timeline)?;
         self.best_time(t2, &self.start, &self.end, &mut timeline)
