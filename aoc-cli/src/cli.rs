@@ -6,6 +6,7 @@ use std::{
 use anyhow::{anyhow, Context, Result};
 use aoc_plumbing::Problem;
 use beacon_exclusion_zone::BeaconExclusionZone;
+use blizzard_basin::BlizzardBasin;
 use boiling_boulders::BoilingBoulders;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
@@ -184,5 +185,6 @@ generate_cli! {
     (MonkeyMath, 21),
     (MonkeyMap, 22),
     (UnstableDiffusion, 23),
+    (BlizzardBasin, 24),
     // command_marker
 }

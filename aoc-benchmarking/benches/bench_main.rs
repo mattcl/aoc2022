@@ -2,6 +2,7 @@ use criterion::criterion_main;
 
 use aoc_benchmarking::aoc_benches;
 use beacon_exclusion_zone::BeaconExclusionZone;
+use blizzard_basin::BlizzardBasin;
 use boiling_boulders::BoilingBoulders;
 use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
@@ -189,6 +190,13 @@ aoc_benches! {
         day_023,
         "../day-023-unstable-diffusion/input.txt",
         UnstableDiffusion,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_024,
+        "../day-024-blizzard-basin/input.txt",
+        BlizzardBasin,
         "Part 1",
         "Part 2"
     ),
