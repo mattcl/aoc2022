@@ -9,6 +9,7 @@ pub use calorie_counting::CalorieCounting;
 pub use camp_cleanup::CampCleanup;
 pub use cathode_ray_tube::CathodeRayTube;
 pub use distress_signal::DistressSignal;
+pub use full_of_hot_air::FullOfHotAir;
 pub use grove_positioning_system::GrovePositioningSystem;
 pub use hill_climbing_algorithm::HillClimbingAlgorithm;
 pub use monkey_in_the_middle::MonkeyInTheMiddle;

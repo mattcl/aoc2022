@@ -14,6 +14,7 @@ use cathode_ray_tube::CathodeRayTube;
 use clap::{Args, CommandFactory, Parser, Subcommand};
 use clap_complete::{generate, shells::Zsh};
 use distress_signal::DistressSignal;
+use full_of_hot_air::FullOfHotAir;
 use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
@@ -186,5 +187,6 @@ generate_cli! {
     (MonkeyMap, 22),
     (UnstableDiffusion, 23),
     (BlizzardBasin, 24),
+    (FullOfHotAir, 25),
     // command_marker
 }

@@ -8,6 +8,7 @@ use calorie_counting::CalorieCounting;
 use camp_cleanup::CampCleanup;
 use cathode_ray_tube::CathodeRayTube;
 use distress_signal::DistressSignal;
+use full_of_hot_air::FullOfHotAir;
 use grove_positioning_system::GrovePositioningSystem;
 use hill_climbing_algorithm::HillClimbingAlgorithm;
 use monkey_in_the_middle::MonkeyInTheMiddle;
@@ -197,6 +198,13 @@ aoc_benches! {
         day_024,
         "../day-024-blizzard-basin/input.txt",
         BlizzardBasin,
+        "Part 1",
+        "Part 2"
+    ),
+    (
+        day_025,
+        "../day-025-full-of-hot-air/input.txt",
+        FullOfHotAir,
         "Part 1",
         "Part 2"
     ),

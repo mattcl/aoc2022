@@ -26,6 +26,7 @@ dependencies = [
  "camp-cleanup",
  "cathode-ray-tube",
  "distress-signal",
+ "full-of-hot-air",
  "grove-positioning-system",
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
@@ -58,6 +59,7 @@ dependencies = [
  "cathode-ray-tube",
  "criterion",
  "distress-signal",
+ "full-of-hot-air",
  "grove-positioning-system",
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
@@ -92,6 +94,7 @@ dependencies = [
  "clap 4.0.29",
  "clap_complete",
  "distress-signal",
+ "full-of-hot-air",
  "grove-positioning-system",
  "hill-climbing-algorithm",
  "monkey-in-the-middle",
@@ -462,6 +465,18 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
+]
+
+[[package]]
+name = "full-of-hot-air"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "aoc-plumbing",
+ "aoc_helpers",
+ "nom",
+ "rustc-hash",
+ "serde",
 ]
 
 [[package]]

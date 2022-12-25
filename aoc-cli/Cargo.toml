@@ -43,3 +43,4 @@ monkey-math = { path = "../day-021-monkey-math" }
 monkey-map = { path = "../day-022-monkey-map" }
 unstable-diffusion = { path = "../day-023-unstable-diffusion" }
 blizzard-basin = { path = "../day-024-blizzard-basin" }
+full-of-hot-air = { path = "../day-025-full-of-hot-air" }
