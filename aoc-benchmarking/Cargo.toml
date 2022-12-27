@@ -12,7 +12,7 @@ harness = false
 par = ["distress-signal/par"]
 
 [dev-dependencies]
-criterion = { version = "0.4.0", features = ["html_reports"] }
+criterion = { git = "https://github.com/bheisler/criterion.rs" , features = ["html_reports", "csv_output"] }
 
 [dependencies]
 aoc-plumbing = { path = "../aoc-plumbing" }

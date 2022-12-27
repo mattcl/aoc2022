@@ -26,18 +26,23 @@ impl Point {
 
 impl Hash for Point {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        state.write_i64(self.x + 4_000_000 * self.y);
+        state.write_i64(self.x * 4_000_000 + self.y)
     }
 }
 
 #[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
 pub struct Line {
+    sensor_id: usize,
     positive_slope: bool,
     y_intersect: i64,
 }
 
 impl Line {
     pub fn intersection(&self, other: &Self) -> Option<Point> {
+        if self.sensor_id == other.sensor_id {
+            return None;
+        }
+
         if self.positive_slope != other.positive_slope && self != other {
             if self.positive_slope {
                 let delta = other.y_intersect - self.y_intersect;
@@ -84,17 +89,18 @@ impl Sensor {
     }
 
     /// Generate lines parallel to our sensor range but one unit outside of range
-    pub fn lines(&self) -> Vec<Line> {
-        let mut res = Vec::with_capacity(4);
+    pub fn add_lines(&self, id: usize, lines: &mut Vec<Line>) {
         let offset = self.dist_to_closest + 1;
         let p1_x = self.location.x + offset;
         let p1_y = self.location.y;
         let a = p1_y - p1_x;
-        res.push(Line {
+        lines.push(Line {
+            sensor_id: id,
             positive_slope: true,
             y_intersect: a,
         });
-        res.push(Line {
+        lines.push(Line {
+            sensor_id: id,
             positive_slope: true,
             y_intersect: a + 2 * offset,
         });
@@ -102,16 +108,16 @@ impl Sensor {
         let p1_x = self.location.x - offset;
         let p1_y = self.location.y;
         let a = p1_y + p1_x;
-        res.push(Line {
+        lines.push(Line {
+            sensor_id: id,
             positive_slope: false,
             y_intersect: a,
         });
-        res.push(Line {
+        lines.push(Line {
+            sensor_id: id,
             positive_slope: false,
             y_intersect: a + 2 * offset,
         });
-
-        res
     }
 }
 
@@ -271,13 +277,12 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
         // possible for the beacon to not be on one of these lines, there would
         // be multiple solutions instead of a unique one.
         let mut lines = Vec::with_capacity(self.sensors.len() * 4);
-        for sensor in self.sensors.iter() {
-            let mut sensor_lines = sensor.lines();
-            lines.append(&mut sensor_lines);
+        for (i, sensor) in self.sensors.iter().enumerate() {
+            sensor.add_lines(i, &mut lines);
         }
 
         // now we can find the intersections of all the lines
-        let mut intersections: FxHashMap<Point, usize> = FxHashMap::default();
+        let mut intersections: FxHashMap<Point, i64> = FxHashMap::default();
         while let Some(line) = lines.pop() {
             'intersector: for other in lines.iter() {
                 if let Some(pt) = line.intersection(other) {
@@ -288,10 +293,12 @@ impl<const N: i64, const M: i64> Problem for BeaconExclusionZoneGen<N, M> {
                         // there should only be one valid point, and we can prune by checking
                         // points that were formed by at least 4 interesections against all the
                         // sensors.
-                        if *e >= 4 {
+                        if *e >= 2 {
                             for sensor in self.sensors.iter() {
                                 if sensor.location.manhattan_distance(&pt) <= sensor.dist_to_closest
                                 {
+                                    // make sure we never check this point again
+                                    *e -= 1000;
                                     continue 'intersector;
                                 }
                             }
