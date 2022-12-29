@@ -339,15 +339,15 @@ impl Display for Chamber {
 pub struct State {
     shape_idx: usize,
     jet_idx: usize,
-    top_rows: u128,
+    top_rows: u64,
 }
 
 impl State {
     pub fn new(shape_idx: usize, jet_idx: usize, rows: &[u8]) -> Self {
         let mut top_rows = 0;
 
-        for i in 0..16 {
-            top_rows |= (rows[rows.len() - 1 - i] as u128) << i * 8;
+        for i in 0..8 {
+            top_rows |= (rows[rows.len() - 1 - i] as u64) << i * 8;
         }
 
         Self {
