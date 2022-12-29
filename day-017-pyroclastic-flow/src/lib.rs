@@ -290,7 +290,7 @@ impl Chamber {
                         highest = candidate;
                     }
 
-                    if i > 18 {
+                    if i > 16 {
                         let state = State::new(shape_idx, jet_idx, &self.rows);
 
                         let e = states.entry(state).or_insert_with(|| (i, highest));
@@ -346,7 +346,7 @@ impl State {
     pub fn new(shape_idx: usize, jet_idx: usize, rows: &[u8]) -> Self {
         let mut top_rows = 0;
 
-        for i in 0..8 {
+        for i in 0..16 {
             top_rows |= (rows[rows.len() - 1 - i] as u128) << i * 8;
         }
 
