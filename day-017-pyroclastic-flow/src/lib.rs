@@ -347,7 +347,7 @@ impl State {
         let mut top_rows = 0;
 
         for i in 0..8 {
-            top_rows += (rows[rows.len() - 1 - i] as u128) << i;
+            top_rows |= (rows[rows.len() - 1 - i] as u128) << i * 8;
         }
 
         Self {
