@@ -1,4 +1,4 @@
-use std::{hash::Hash, marker::PhantomData, str::FromStr};
+use std::{collections::BinaryHeap, hash::Hash, str::FromStr};
 
 use aoc_plumbing::Problem;
 use nom::{
@@ -10,197 +10,47 @@ use nom::{
 };
 use rayon::prelude::*;
 
-pub trait Mineral {
-    const BIT: u8;
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub enum Mineral {
+    Ore,
+    Clay,
+    Obsidian,
+    Geode,
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Ore;
-
-impl Mineral for Ore {
-    const BIT: u8 = 0b1;
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
+pub struct Robot {
+    mineral: Mineral,
+    costs: [i64; 4],
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Clay;
-
-impl Mineral for Clay {
-    const BIT: u8 = 0b10;
-}
-
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Obsidian;
-
-impl Mineral for Obsidian {
-    const BIT: u8 = 0b100;
-}
-
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Geode;
-
-impl Mineral for Geode {
-    const BIT: u8 = 0b1000;
-}
-
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Costs {
-    ore: i64,
-    clay: i64,
-    obsidian: i64,
-    geode: i64,
-}
-
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Robot<T> {
-    costs: Costs,
-    _marker: PhantomData<T>,
-}
-
-impl<T> Robot<T>
-where
-    T: Mineral,
-{
-    pub fn ore_cost(&self) -> i64 {
-        self.costs.ore
-    }
-
-    pub fn costs(&self) -> &Costs {
-        &self.costs
-    }
-
-    pub fn bit(&self) -> u8 {
-        T::BIT
+impl Robot {
+    pub fn new(mineral: Mineral, costs: [i64; 4]) -> Self {
+        Self { mineral, costs }
     }
 }
 
-impl Robot<Ore> {
-    pub fn new(ore: i64) -> Self {
-        Self {
-            costs: Costs {
-                ore,
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    pub fn can_afford(&self, inventory: &[i64; 4]) -> bool {
-        self.costs.ore <= inventory[0]
-    }
-
-    pub fn pay_for(&self, inventory: &mut [i64; 4]) {
-        inventory[0] -= self.costs.ore;
-    }
-
-    pub fn refund(&self, inventory: &mut [i64; 4]) {
-        inventory[0] += self.costs.ore;
-    }
-}
-
-impl Robot<Clay> {
-    pub fn new(ore: i64) -> Self {
-        Self {
-            costs: Costs {
-                ore,
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    pub fn can_afford(&self, inventory: &[i64; 4]) -> bool {
-        self.costs.ore <= inventory[0]
-    }
-
-    pub fn pay_for(&self, inventory: &mut [i64; 4]) {
-        inventory[0] -= self.costs.ore;
-    }
-
-    pub fn refund(&self, inventory: &mut [i64; 4]) {
-        inventory[0] += self.costs.ore;
-    }
-}
-
-impl Robot<Obsidian> {
-    pub fn new(ore: i64, clay: i64) -> Self {
-        Self {
-            costs: Costs {
-                ore,
-                clay,
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    pub fn can_afford(&self, inventory: &[i64; 4]) -> bool {
-        self.costs.ore <= inventory[0] && self.costs.clay <= inventory[1]
-    }
-
-    pub fn pay_for(&self, inventory: &mut [i64; 4]) {
-        inventory[0] -= self.costs.ore;
-        inventory[1] -= self.costs.clay;
-    }
-
-    pub fn refund(&self, inventory: &mut [i64; 4]) {
-        inventory[0] += self.costs.ore;
-        inventory[1] += self.costs.clay;
-    }
-}
-
-impl Robot<Geode> {
-    pub fn new(ore: i64, obsidian: i64) -> Self {
-        Self {
-            costs: Costs {
-                ore,
-                obsidian,
-                ..Default::default()
-            },
-            ..Default::default()
-        }
-    }
-
-    pub fn can_afford(&self, inventory: &[i64; 4]) -> bool {
-        self.costs.ore <= inventory[0] && self.costs.obsidian <= inventory[2]
-    }
-
-    pub fn pay_for(&self, inventory: &mut [i64; 4]) {
-        inventory[0] -= self.costs.ore;
-        inventory[2] -= self.costs.obsidian;
-    }
-
-    pub fn refund(&self, inventory: &mut [i64; 4]) {
-        inventory[0] += self.costs.ore;
-        inventory[2] += self.costs.obsidian;
-    }
-}
-
-pub type OreRobot = Robot<Ore>;
-pub type ClayRobot = Robot<Clay>;
-pub type ObsidianRobot = Robot<Obsidian>;
-pub type GeodeRobot = Robot<Geode>;
-
-fn parse_ore(input: &str) -> IResult<&str, OreRobot> {
+fn parse_ore(input: &str) -> IResult<&str, Robot> {
     let (input, ore) = delimited(
         tag("Each ore robot costs "),
         nom::character::complete::i64,
         tag(" ore."),
     )(input)?;
 
-    Ok((input, OreRobot::new(ore)))
+    Ok((input, Robot::new(Mineral::Ore, [ore, 0, 0, 0])))
 }
 
-fn parse_clay(input: &str) -> IResult<&str, ClayRobot> {
+fn parse_clay(input: &str) -> IResult<&str, Robot> {
     let (input, ore) = delimited(
         tag("Each clay robot costs "),
         nom::character::complete::i64,
         tag(" ore."),
     )(input)?;
 
-    Ok((input, ClayRobot::new(ore)))
+    Ok((input, Robot::new(Mineral::Clay, [ore, 0, 0, 0])))
 }
 
-fn parse_obsidian(input: &str) -> IResult<&str, ObsidianRobot> {
+fn parse_obsidian(input: &str) -> IResult<&str, Robot> {
     let (input, (ore, clay)) = delimited(
         tag("Each obsidian robot costs "),
         separated_pair(
@@ -211,10 +61,10 @@ fn parse_obsidian(input: &str) -> IResult<&str, ObsidianRobot> {
         tag(" clay."),
     )(input)?;
 
-    Ok((input, ObsidianRobot::new(ore, clay)))
+    Ok((input, Robot::new(Mineral::Obsidian, [ore, clay, 0, 0])))
 }
 
-fn parse_geode(input: &str) -> IResult<&str, GeodeRobot> {
+fn parse_geode(input: &str) -> IResult<&str, Robot> {
     let (input, (ore, obsidian)) = delimited(
         tag("Each geode robot costs "),
         separated_pair(
@@ -225,17 +75,17 @@ fn parse_geode(input: &str) -> IResult<&str, GeodeRobot> {
         tag(" obsidian."),
     )(input)?;
 
-    Ok((input, GeodeRobot::new(ore, obsidian)))
+    Ok((input, Robot::new(Mineral::Geode, [ore, 0, obsidian, 0])))
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
-pub struct State {
+pub struct OldState {
     time_remaining: i64,
     population: [i64; 4],
     inventory: [i64; 4],
 }
 
-impl Default for State {
+impl Default for OldState {
     fn default() -> Self {
         Self {
             time_remaining: 0,
@@ -245,7 +95,7 @@ impl Default for State {
     }
 }
 
-impl State {
+impl OldState {
     pub fn geodes_with_remaining_time(&self) -> i64 {
         self.inventory[3] + self.population[3] * self.time_remaining
     }
@@ -280,118 +130,177 @@ impl State {
     }
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq, Hash)]
-pub struct Limits {
-    ore: i64,
-    clay: i64,
-    obsidian: i64,
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+pub struct State {
+    theoretical_best: i64,
+    minutes_remaining: i64,
+    inventory: [i64; 4],
+    population: [i64; 4],
 }
 
-#[derive(Debug, Clone, Copy, Default, Eq, PartialEq)]
+impl Default for State {
+    fn default() -> Self {
+        Self {
+            theoretical_best: 0,
+            minutes_remaining: 0,
+            inventory: [0; 4],
+            population: [1, 0, 0, 0],
+        }
+    }
+}
+
+impl State {
+    pub fn best(&self) -> i64 {
+        self.inventory[3] + self.population[3] * self.minutes_remaining
+    }
+
+    pub fn time_until_next(&self, robot: usize, blueprint: &Blueprint) -> i64 {
+        (0..3)
+            .map(|i| {
+                if blueprint.robots[robot].costs[i] <= self.inventory[i] {
+                    0
+                } else if self.population[i] == 0 {
+                    i64::MAX
+                } else {
+                    1 + (blueprint.robots[robot].costs[i] - self.inventory[i] - 1)
+                        / self.population[i]
+                }
+            })
+            .max()
+            .unwrap()
+    }
+
+    pub fn next(&self, wait: i64, robot: usize, blueprint: &Blueprint) -> Self {
+        let mut n = *self;
+        for i in 0..4 {
+            n.inventory[i] =
+                n.inventory[i] + self.population[i] * (wait + 1) - blueprint.robots[robot].costs[i];
+            if self.population[i] >= blueprint.limits[i] {
+                n.inventory[i] = blueprint.limits[i];
+            }
+        }
+        n.minutes_remaining -= wait + 1;
+        n.population[robot] += 1;
+
+        // pretend like we live in a world where we have seprate inventories
+        // that we can use to buy each of the robot types. The most geode robots
+        // we can produce in this world is the theoretical best we can do.
+        n.theoretical_best = {
+            // make copy of our current inventory for reach of the robots
+            let mut inventories = [n.inventory; 4];
+
+            // make a copy of the current robot inventory
+            let mut population = n.population;
+
+            // for the rest of the time we have left
+            for _ in 0..n.minutes_remaining {
+                let mut new_inventories = inventories;
+
+                // for each of the inventory copies
+                for i in 0..4 {
+                    // adjust the mineral inventory based on the current
+                    // theoretical best for each robot type
+                    for mineral in 0..4 {
+                        new_inventories[i][mineral] += population[mineral];
+                    }
+                }
+
+                // for each of the inventory copies
+                for i in 0..4 {
+                    // if we can afford the robot this inventory copy correponds
+                    // to, buy it and increment our theoretical best population
+                    // of robots.
+                    if (0..3).all(|mineral| {
+                        inventories[i][mineral] >= blueprint.robots[i].costs[mineral]
+                    }) {
+                        (0..3).for_each(|mineral| {
+                            new_inventories[i][mineral] -= blueprint.robots[i].costs[mineral]
+                        });
+                        population[i] += 1;
+                    }
+                }
+                inventories = new_inventories;
+            }
+
+            // we could pick any of the inventories, but just pick 0. The value
+            // here will be the theoretical best number of geodes we could have
+            // produced
+            inventories[0][3]
+        };
+        n
+    }
+}
+
+impl Ord for State {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        // we want to sort the heap such that the largest theoretical bests
+        // end up at the top of the heap. If there's a tie, use the minutes
+        // remaining to break the tie, with _lower_ minutes remaining at the
+        // top of the heap
+        self.theoretical_best
+            .cmp(&other.theoretical_best)
+            .then_with(|| other.minutes_remaining.cmp(&self.minutes_remaining))
+    }
+}
+
+impl PartialOrd for State {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Blueprint {
     id: i64,
-    ore: OreRobot,
-    clay: ClayRobot,
-    obsidian: ObsidianRobot,
-    geode: GeodeRobot,
+    robots: [Robot; 4],
+    limits: [i64; 4],
 }
 
 impl Blueprint {
     pub fn most_geodes_in_time(&self, minutes: i64) -> i64 {
-        let limits = Limits {
-            ore: self
-                .ore
-                .ore_cost()
-                .max(self.clay.ore_cost())
-                .max(self.obsidian.ore_cost())
-                .max(self.geode.ore_cost()),
-            clay: self.obsidian.costs().clay,
-            obsidian: self.geode.costs().obsidian,
-        };
+        let mut heap = BinaryHeap::new();
 
-        let state = State {
-            time_remaining: minutes,
+        heap.push(State {
+            minutes_remaining: minutes,
             ..Default::default()
-        };
+        });
 
-        let mut best = 0;
+        let mut best = i64::MIN;
 
-        self.search(&state, &limits, 0, &mut best);
+        while let Some(state) = heap.pop() {
+            if state.theoretical_best <= best {
+                continue;
+            }
+
+            // this is the actual best we can do with this state if we didn't
+            // build any more robots
+            best = best.max(state.best());
+
+            // simulate buying each kind of robot. We don't need to simulate
+            // waiting because we force the purchase of the next robot
+            for i in 0..4 {
+                if state.population[i] == self.limits[i] {
+                    continue;
+                }
+
+                // figure out how long to wait to build a robot of this type
+                let wait = state.time_until_next(i, &self);
+
+                // if we'd need to wait longer than the time we have left + 1,
+                // skip this
+                if wait == i64::MAX || wait + 1 >= state.minutes_remaining {
+                    continue;
+                }
+
+                let next_state = state.next(wait, i, &self);
+
+                if next_state.theoretical_best > best {
+                    heap.push(next_state);
+                }
+            }
+        }
+
         best
-    }
-
-    pub fn search(&self, state: &State, limits: &Limits, skipped: u8, best: &mut i64) {
-        if state.time_remaining <= 1 {
-            let geodes = state.geodes_with_remaining_time();
-            if geodes > *best {
-                *best = geodes;
-            }
-            return;
-        }
-
-        if state.geode_limit() < *best {
-            return;
-        }
-
-        if state.obsidian_limit() < self.geode.costs().obsidian {
-            let geodes = state.geodes_with_remaining_time();
-            if geodes > *best {
-                *best = geodes;
-            }
-            return;
-        }
-
-        let mut next_state = state.next();
-
-        // build geode robots always
-        if self.geode.can_afford(&state.inventory) {
-            self.geode.pay_for(&mut next_state.inventory);
-            next_state.population[3] += 1;
-            return self.search(&next_state, &limits, 0, best);
-        }
-
-        // try to build any other robots. We're going to try in reverse order
-        // to maybe cut out some cycles
-        let mut can_afford = 0u8;
-
-        if self.ore.can_afford(&state.inventory)
-            && skipped & Ore::BIT == 0
-            && state.population[0] < limits.ore
-        {
-            can_afford |= Ore::BIT;
-            self.ore.pay_for(&mut next_state.inventory);
-            next_state.population[0] += 1;
-            self.search(&next_state, &limits, 0, best);
-            next_state.population[0] -= 1;
-            self.ore.refund(&mut next_state.inventory);
-        }
-
-        if self.clay.can_afford(&state.inventory)
-            && skipped & Clay::BIT == 0
-            && state.population[1] < limits.clay
-        {
-            can_afford |= Clay::BIT;
-            self.clay.pay_for(&mut next_state.inventory);
-            next_state.population[1] += 1;
-            self.search(&next_state, &limits, 0, best);
-            next_state.population[1] -= 1;
-            self.clay.refund(&mut next_state.inventory);
-        }
-        if self.obsidian.can_afford(&state.inventory)
-            && skipped & Obsidian::BIT == 0
-            && state.population[2] < limits.obsidian
-        {
-            can_afford |= Obsidian::BIT;
-            self.obsidian.pay_for(&mut next_state.inventory);
-            next_state.population[2] += 1;
-            self.search(&next_state, &limits, 0, best);
-            next_state.population[2] -= 1;
-            self.obsidian.refund(&mut next_state.inventory);
-        }
-
-        // now simulate not buying, but set the ones we skipped to the ones we
-        // could have bought
-        self.search(&next_state, &limits, can_afford, best);
     }
 }
 
@@ -408,16 +317,18 @@ fn parse_blueprint(input: &str) -> IResult<&str, Blueprint> {
         preceded(space0, parse_geode),
     ))(input)?;
 
-    Ok((
-        input,
-        Blueprint {
-            id,
-            ore,
-            clay,
-            obsidian,
-            geode,
-        },
-    ))
+    let robots = [ore, clay, obsidian, geode];
+    let mut limits = [i64::MAX; 4];
+
+    for robot in robots.iter() {
+        for i in 0..3 {
+            if robot.costs[i] > limits[i] {
+                limits[i] = robot.costs[i];
+            }
+        }
+    }
+
+    Ok((input, Blueprint { id, robots, limits }))
 }
 
 fn parse_blueprints(input: &str) -> IResult<&str, Vec<Blueprint>> {
