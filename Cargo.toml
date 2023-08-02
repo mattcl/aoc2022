@@ -23,3 +23,6 @@ thiserror = "1.0.35"
 
 [profile.release]
 lto = true
+
+[workspace.package]
+rust-version = "1.66.1"
