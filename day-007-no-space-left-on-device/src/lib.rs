@@ -76,7 +76,7 @@ impl Directory {
         &self,
         directories: &[Directory],
         results: &mut Vec<u64>,
-        criteria: &impl Fn(u64) -> bool,
+        criteria: impl Fn(u64) -> bool + Copy,
     ) -> u64 {
         let s = self.filesize
             + self
@@ -170,14 +170,14 @@ impl Problem for NoSpaceLeftOnDevice {
 
     fn part_one(&mut self) -> Result<Self::P1, Self::ProblemError> {
         let mut results = Vec::with_capacity(self.directories.len());
-        self.directories[0].size(&self.directories, &mut results, &|v| v <= 100000);
+        self.directories[0].size(&self.directories, &mut results, |v| v <= 100000);
         Ok(results.iter().sum())
     }
 
     fn part_two(&mut self) -> Result<Self::P2, Self::ProblemError> {
         let mut results = Vec::with_capacity(self.directories.len());
         let desired = 30000000 - (70000000 - self.total_size);
-        self.directories[0].size(&self.directories, &mut results, &|v| v >= desired);
+        self.directories[0].size(&self.directories, &mut results, |v| v >= desired);
 
         results
             .into_iter()

@@ -294,12 +294,34 @@ impl Chamber {
                         let state = State::new(shape_idx, jet_idx, &self.rows);
 
                         let e = states.entry(state).or_insert_with(|| (i, highest));
+                        // if we didn't just insert this entry
                         if e.0 != i {
+                            // figure out how many iterations between now and
+                            // the previous time was saw this state. This should
+                            // be the period that we expect to see these states
+                            // again
                             let period = i - e.0;
+
+                            // we want to make sure we're "aligned" with respect
+                            // to the total iterations, since the first full
+                            // period may not have begun at 0. This allows us
+                            // to have the property that if x % n == y % n, then
+                            // (max(x,y) - min(x,y)) % n == 0. This is maybe not
+                            // ideal, because we _could_ just set our state to
+                            // be where we'd end up then simulate the remainder
+                            // but I didn't want to have to deal with the edges
+                            // there.
                             if 1_000_000_000_000 % period == i % period {
-                                let fp = highest - e.1;
+                                // we know that the current height minus the
+                                // previously recorded height for this state is
+                                // the height gain per period
+                                let hg = highest - e.1;
+
+                                // we can do this because the above property
+                                // holds where 1_000_000_000_000 - i is evenly
+                                // divisible by the period.
                                 let rem = (1_000_000_000_000 - i) / period;
-                                return highest + rem * fp;
+                                return highest + rem * hg;
                             }
                         }
                     }
